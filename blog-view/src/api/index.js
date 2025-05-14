@@ -1,11 +1,12 @@
 import axios from '@/plugins/axios'
 
-export function getHitokoto() {
-	return axios({
-		url: 'https://v1.hitokoto.cn/?c=a',
-		method: 'GET'
-	})
-}
+// 注释掉或删除 getHitokoto 函数
+// export function getHitokoto() {
+// 	return axios({
+// 		url: '/hitokoto/?c=a',
+// 		method: 'get'
+// 	})
+// }
 
 export function getSite() {
 	return axios({

@@ -20,8 +20,7 @@
 				</div>
 
 				<div class="seven wide column">
-					<p id="hitokotoText" class="m-text-thin m-text-spaced m-opacity-mini">{{ hitokoto.hitokoto }}</p>
-					<p id="hitokotoFrom" class="m-text-thin m-text-spaced m-opacity-mini" style="float: right" v-text="hitokoto.from?`——《${hitokoto.from}》`:''"></p>
+					<p class="m-text-thin m-text-spaced m-opacity-mini">这里原来是一言API显示的位置。</p>
 				</div>
 			</div>
 
@@ -61,10 +60,6 @@
 				type: Array,
 				required: true
 			},
-			hitokoto: {
-				type: Object,
-				required: true
-			}
 		},
 		methods: {
 			toBlog(blog) {

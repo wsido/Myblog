@@ -3,9 +3,9 @@ module.exports = {
 	 * @type {string}
 	 * @description 首页三张背景图
 	 */
-	bg1: 'https://cdn.wsido.top/blog/img/bg1.jpg',
-	bg2: 'https://cdn.wsido.top/blog/img/bg2.jpg',
-	bg3: 'https://cdn.wsido.top/blog/img/bg3.jpg',
+	bg1: '/img/bg1.jpg',
+	bg2: '/img/bg2.jpg',
+	bg3: '/img/bg3.jpg',
 
 	/**
 	 * @type {string}

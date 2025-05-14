@@ -419,4 +419,14 @@ public class BlogServiceImpl implements BlogService {
 		redisService.deleteCacheByKey(RedisKeyConstants.NEW_BLOG_LIST);
 		redisService.deleteCacheByKey(RedisKeyConstants.ARCHIVE_BLOG_MAP);
 	}
+
+	@Override
+	public List<Blog> getBlogListByUserId(Long userId, Integer start, Integer size) {
+		return blogMapper.getBlogListByUserId(userId, start, size);
+	}
+
+	@Override
+	public int countBlogByUserId(Long userId) {
+		return blogMapper.countBlogByUserId(userId);
+	}
 }

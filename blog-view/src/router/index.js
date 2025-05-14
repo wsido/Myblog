@@ -1,14 +1,27 @@
+import getPageTitle from '@/util/get-page-title'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import getPageTitle from '@/util/get-page-title'
 
 Vue.use(VueRouter)
+
+// 解决Vue Router重复导航错误
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+	return originalPush.call(this, location).catch(err => {
+		if (err.name !== 'NavigationDuplicated') throw err
+	})
+}
 
 const routes = [
 	{
 		path: '/login',
 		component: () => import('@/views/Login'),
 		meta: {title: '登录'}
+	},
+	{
+		path: '/register',
+		component: () => import('@/views/Register'),
+		meta: {title: '注册'}
 	},
 	{
 		path: '/',
@@ -62,6 +75,24 @@ const routes = [
 				name: 'about',
 				component: () => import('@/views/about/About'),
 				meta: {title: '关于我'}
+			},
+			{
+				path: '/user/center',
+				name: 'userCenter',
+				component: () => import('@/views/user/UserCenter'),
+				meta: {title: '个人中心', requireAuth: true}
+			},
+			{
+				path: '/user/blogs',
+				name: 'userBlogs',
+				component: () => import('@/views/user/UserBlogs'),
+				meta: {title: '我的博客', requireAuth: true}
+			},
+			{
+				path: '/user/favorites',
+				name: 'userFavorites',
+				component: () => import('@/views/user/UserFavorites'),
+				meta: {title: '我的收藏', requireAuth: true}
 			}
 		]
 	}
@@ -75,8 +106,18 @@ const router = new VueRouter({
 
 //挂载路由守卫
 router.beforeEach((to, from, next) => {
+	// 需要用户登录的页面
+	if (to.meta.requireAuth) {
+		const token = window.localStorage.getItem('userToken')
+		if (token) {
+			next()
+		} else {
+			next('/login')
+		}
+	} else {
+		next()
+	}
 	document.title = getPageTitle(to.meta.title)
-	next()
 })
 
 export default router

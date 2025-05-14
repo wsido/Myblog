@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.wsido.mapper.UserBlogFavoriteMapper">
+
+    <resultMap id="userBlogFavoriteResultMap" type="top.wsido.entity.UserBlogFavorite">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="blogId" column="blog_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!-- 为了 findFavoriteBlogsByUserId，我们可能需要一个 Blog 的 resultMap -->
+    <!-- 假设 Blog 实体已有 resultMap，或者在此定义一个简化的 -->
+    <resultMap id="blogResultMap" type="top.wsido.entity.Blog">
+        <id property="id" column="b_id"/>
+        <result property="title" column="b_title"/>
+        <result property="firstPicture" column="b_first_picture"/>
+        <result property="createTime" column="b_create_time"/>
+        <result property="views" column="b_views"/>
+        <!-- 根据需要添加更多 Blog 字段 -->
+    </resultMap>
+
+    <select id="findFavoriteBlogsByUserId" resultMap="blogResultMap">
+        SELECT 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.first_picture AS b_first_picture,
+            b.create_time AS b_create_time,
+            b.views AS b_views
+            /* 根据需要选择更多 Blog 表的字段 */
+        FROM 
+            user_blog_favorite ubf
+        JOIN 
+            blog b ON ubf.blog_id = b.id
+        WHERE 
+            ubf.user_id = #{userId}
+        ORDER BY 
+            ubf.create_time DESC
+    </select>
+
+    <select id="findByUserIdAndBlogId" resultMap="userBlogFavoriteResultMap">
+        SELECT id, user_id, blog_id, create_time 
+        FROM user_blog_favorite 
+        WHERE user_id = #{userId} AND blog_id = #{blogId}
+        LIMIT 1
+    </select>
+
+    <insert id="insertFavorite" parameterType="top.wsido.entity.UserBlogFavorite" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_blog_favorite (user_id, blog_id, create_time)
+        VALUES (#{userId}, #{blogId}, #{createTime})
+    </insert>
+
+    <delete id="deleteByUserIdAndBlogId">
+        DELETE FROM user_blog_favorite 
+        WHERE user_id = #{userId} AND blog_id = #{blogId}
+    </delete>
+
+</mapper> 

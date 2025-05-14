@@ -7,15 +7,24 @@
 			</div>
 			<!--登录表单-->
 			<el-form ref="loginFormRef" :model="loginForm" :rules="loginFormRules" class="login_form">
+				<el-form-item>
+					<el-radio-group v-model="loginType">
+						<el-radio :label="1">普通用户</el-radio>
+						<el-radio :label="2">管理员</el-radio>
+					</el-radio-group>
+				</el-form-item>
 				<el-form-item prop="username">
-					<el-input v-model="loginForm.username" prefix-icon="el-icon-user-solid"></el-input>
+					<el-input v-model="loginForm.username" prefix-icon="el-icon-user-solid" placeholder="用户名"></el-input>
 				</el-form-item>
 				<el-form-item prop="password">
-					<el-input v-model="loginForm.password" prefix-icon="el-icon-lock" show-password @keyup.native.enter="login"></el-input>
+					<el-input v-model="loginForm.password" prefix-icon="el-icon-lock" show-password placeholder="密码" @keyup.native.enter="login"></el-input>
 				</el-form-item>
 				<el-form-item class="btns">
 					<el-button type="primary" @click="login">登录</el-button>
 					<el-button type="info" @click="resetLoginForm">重置</el-button>
+				</el-form-item>
+				<el-form-item v-if="loginType === 1" class="register-link">
+					<router-link to="/register">没有账号？立即注册</router-link>
 				</el-form-item>
 			</el-form>
 		</div>
@@ -24,14 +33,16 @@
 
 <script>
 	import { login } from "@/api/login";
+import { userLogin } from "@/api/user";
 
 	export default {
 		name: "Login",
 		data() {
 			return {
+				loginType: 1,  // 1: 普通用户, 2: 管理员
 				loginForm: {
-					username: 'wsido',
-					password: '11'
+					username: '',
+					password: ''
 				},
 				loginFormRules: {
 					username: [
@@ -50,11 +61,27 @@
 			login() {
 				this.$refs.loginFormRef.validate(valid => {
 					if (valid) {
-						login(this.loginForm).then(res => {
+						// 根据登录类型选择不同的API
+						const loginAction = this.loginType === 1 ? userLogin : login;
+						const tokenKey = this.loginType === 1 ? 'userToken' : 'adminToken';
+						
+						loginAction(this.loginForm).then(res => {
 							if (res.code === 200) {
 								this.msgSuccess(res.msg)
-								window.localStorage.setItem('adminToken', res.data.token)
-								this.$router.push('/home')
+								window.localStorage.setItem(tokenKey, res.data.token)
+								
+								// 跳转到不同的页面
+								if (this.loginType === 1) {
+									// 普通用户跳转到首页
+									this.$router.push('/home')
+									// 添加延迟，确保token已存储，页面刷新获取最新状态
+									setTimeout(() => {
+										window.location.reload()
+									}, 500)
+								} else {
+									// 管理员跳转到后台
+									window.open('/admin', '_blank')
+								}
 							} else {
 								this.msgError(res.msg)
 							}
@@ -77,7 +104,7 @@
 
 	.login_box {
 		width: 450px;
-		height: 300px;
+		height: 330px;
 		background-color: #fff;
 		border-radius: 3px;
 		position: absolute;
@@ -117,5 +144,16 @@
 	.btns {
 		display: flex;
 		justify-content: flex-end;
+	}
+	
+	.register-link {
+		margin-top: -15px;
+		margin-bottom: 10px;
+		text-align: center;
+	}
+	
+	.register-link a {
+		color: #409EFF;
+		text-decoration: none;
 	}
 </style>

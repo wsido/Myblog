@@ -15,4 +15,23 @@
     <update id="updateUserByUsername">
         update user set username=#{user.username}, password=#{user.password}, update_time=now() where username=#{username}
     </update>
+    
+    <!--插入新用户-->
+    <insert id="insertUser" parameterType="top.wsido.entity.User" useGeneratedKeys="true" keyProperty="id">
+        insert into user (username, password, nickname, avatar, email, create_time, update_time, role, type)
+        values (#{username}, #{password}, #{nickname}, #{avatar}, #{email}, #{createTime}, #{updateTime}, #{role}, #{type})
+    </insert>
+    
+    <!--根据ID更新用户信息-->
+    <update id="updateById" parameterType="top.wsido.entity.User">
+        update user
+        <set>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            update_time = now()
+        </set>
+        where id=#{id}
+    </update>
 </mapper>

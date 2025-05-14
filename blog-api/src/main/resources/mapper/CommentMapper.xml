@@ -131,4 +131,12 @@
         values (#{nickname}, #{email}, #{content}, #{avatar}, #{createTime}, #{website}, #{ip}, #{published}, #{adminComment},
         #{page}, #{notice}, #{parentCommentId}, #{blogId}, #{qq})
     </insert>
+
+    <!-- 根据用户ID统计其所有博客收到的公开评论总数 -->
+    <select id="countCommentsByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(c.id) 
+        FROM comment c
+        JOIN blog b ON c.blog_id = b.id
+        WHERE b.user_id = #{userId} AND c.is_published = true
+    </select>
 </mapper>

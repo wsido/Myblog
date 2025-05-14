@@ -244,19 +244,19 @@ CREATE TABLE `site_setting`  (
 -- ----------------------------
 -- Records of site_setting
 -- ----------------------------
-INSERT INTO `site_setting` VALUES (1, 'blogName', '博客名称', 'Naccl\'s Blog', 1);
-INSERT INTO `site_setting` VALUES (2, 'webTitleSuffix', '网页标题后缀', ' - Naccl\'s Blog', 1);
+INSERT INTO `site_setting` VALUES (1, 'blogName', '博客名称', 'wsido\'s Blog', 1);
+INSERT INTO `site_setting` VALUES (2, 'webTitleSuffix', '网页标题后缀', ' - wsido\'s Blog', 1);
 INSERT INTO `site_setting` VALUES (3, 'footerImgTitle', '页脚图片标题', '手机看本站', 1);
 INSERT INTO `site_setting` VALUES (4, 'footerImgUrl', '页脚图片路径', '/img/qr.png', 1);
 INSERT INTO `site_setting` VALUES (5, 'copyright', 'Copyright', '{\"title\":\"Copyright © 2019 - 2022\",\"siteName\":\"NACCL\'S BLOG\"}', 1);
 INSERT INTO `site_setting` VALUES (6, 'beian', 'ICP备案号', '', 1);
-INSERT INTO `site_setting` VALUES (8, 'commentAdminFlag', '博主评论标识', '咕咕', 1);
+INSERT INTO `site_setting` VALUES (8, 'commentAdminFlag', '博主评论标识', 'ADMIN', 1);
 INSERT INTO `site_setting` VALUES (9, 'playlistServer', '播放器平台', 'netease', 1);
 INSERT INTO `site_setting` VALUES (10, 'playlistId', '播放器歌单', '3071528549', 1);
 INSERT INTO `site_setting` VALUES (11, 'avatar', '头像', '/img/avatar.jpg', 2);
 INSERT INTO `site_setting` VALUES (12, 'name', '昵称', 'wsido', 2);
-INSERT INTO `site_setting` VALUES (13, 'rollText', '滚动个签', '\"云鹤当归天，天不迎我妙木仙；\",\"游龙当归海，海不迎我自来也。\"', 2);
-INSERT INTO `site_setting` VALUES (14, 'github', 'GitHub', 'https://github.com/Naccl', 2);
+INSERT INTO `site_setting` VALUES (13, 'rollText', '滚动个签', '\"THAT DAT I SET FIRE \",\"TO MY PAST DAY\"', 2);
+INSERT INTO `site_setting` VALUES (14, 'github', 'GitHub', 'https://github.com/wsido', 2);
 INSERT INTO `site_setting` VALUES (16, 'qq', 'QQ', 'http://sighttp.qq.com/authd?IDKEY=', 2);
 INSERT INTO `site_setting` VALUES (18, 'netease', '网易云音乐', 'https://music.163.com/#/user/home?id=', 2);
 INSERT INTO `site_setting` VALUES (19, 'email', 'email', 'mailto:you@example.com', 2);
@@ -357,5 +357,22 @@ CREATE TABLE `visitor`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `idx_uuid` (`uuid`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for user_blog_favorite
+-- ----------------------------
+DROP TABLE IF EXISTS `user_blog_favorite`;
+CREATE TABLE `user_blog_favorite`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '收藏记录ID',
+  `user_id` bigint(0) NOT NULL COMMENT '用户ID',
+  `blog_id` bigint(0) NOT NULL COMMENT '博客ID',
+  `create_time` datetime(0) NOT NULL COMMENT '收藏时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE COMMENT '用户ID索引',
+  INDEX `idx_blog_id`(`blog_id`) USING BTREE COMMENT '博客ID索引',
+  UNIQUE INDEX `uk_user_blog`(`user_id`, `blog_id`) USING BTREE COMMENT '用户ID和博客ID联合唯一索引，防止重复收藏',
+  CONSTRAINT `fk_user_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_user_favorite_blog` FOREIGN KEY (`blog_id`) REFERENCES `blog` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户博客收藏表' ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,5 +1,8 @@
 package top.wsido.service;
 
+import java.util.List;
+import java.util.Map;
+
 import top.wsido.entity.Blog;
 import top.wsido.model.dto.BlogVisibility;
 import top.wsido.model.vo.BlogDetail;
@@ -8,9 +11,6 @@ import top.wsido.model.vo.NewBlog;
 import top.wsido.model.vo.PageResult;
 import top.wsido.model.vo.RandomBlog;
 import top.wsido.model.vo.SearchBlog;
-
-import java.util.List;
-import java.util.Map;
 
 public interface BlogService {
 	List<Blog> getListByTitleAndCategoryId(String title, Integer categoryId);
@@ -68,4 +68,22 @@ public interface BlogService {
 	Boolean getCommentEnabledByBlogId(Long blogId);
 
 	Boolean getPublishedByBlogId(Long blogId);
+	
+	/**
+	 * 根据用户ID获取博客列表
+	 *
+	 * @param userId 用户ID
+	 * @param start 起始索引
+	 * @param size 每页数量
+	 * @return 博客列表
+	 */
+	List<Blog> getBlogListByUserId(Long userId, Integer start, Integer size);
+	
+	/**
+	 * 根据用户ID统计博客数量
+	 *
+	 * @param userId 用户ID
+	 * @return 博客数量
+	 */
+	int countBlogByUserId(Long userId);
 }

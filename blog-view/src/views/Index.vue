@@ -45,22 +45,22 @@
 			<img src="/img/paper-plane.png" style="width: 40px;height: 40px;">
 		</el-backtop>
 		<!--底部footer-->
-		<Footer :siteInfo="siteInfo" :badges="badges" :newBlogList="newBlogList" :hitokoto="hitokoto"/>
+		<Footer :siteInfo="siteInfo" :badges="badges" :newBlogList="newBlogList"/>
 	</div>
 </template>
 
 <script>
-	import {getHitokoto, getSite} from '@/api/index'
-	import Nav from "@/components/index/Nav";
-	import Header from "@/components/index/Header";
-	import Footer from "@/components/index/Footer";
-	import Introduction from "@/components/sidebar/Introduction";
-	import Tags from "@/components/sidebar/Tags";
-	import RandomBlog from "@/components/sidebar/RandomBlog";
-	import Tocbot from "@/components/sidebar/Tocbot";
-	import BlogPasswordDialog from "@/components/index/BlogPasswordDialog";
-	import {mapState} from 'vuex'
-	import {SAVE_CLIENT_SIZE, SAVE_INTRODUCTION, SAVE_SITE_INFO, RESTORE_COMMENT_FORM} from "@/store/mutations-types";
+	import { getSite } from '@/api/index';
+import BlogPasswordDialog from "@/components/index/BlogPasswordDialog";
+import Footer from "@/components/index/Footer";
+import Header from "@/components/index/Header";
+import Nav from "@/components/index/Nav";
+import Introduction from "@/components/sidebar/Introduction";
+import RandomBlog from "@/components/sidebar/RandomBlog";
+import Tags from "@/components/sidebar/Tags";
+import Tocbot from "@/components/sidebar/Tocbot";
+import { RESTORE_COMMENT_FORM, SAVE_CLIENT_SIZE, SAVE_INTRODUCTION, SAVE_SITE_INFO } from "@/store/mutations-types";
+import { mapState } from 'vuex';
 
 	export default {
 		name: "Index",
@@ -78,7 +78,6 @@
 				randomBlogList: [],
 				badges: [],
 				newBlogList: [],
-				hitokoto: {},
 			}
 		},
 		computed: {
@@ -92,7 +91,6 @@
 		},
 		created() {
 			this.getSite()
-			this.getHitokoto()
 			//从localStorage恢复之前的评论信息
 			this.$store.commit(RESTORE_COMMENT_FORM)
 		},
@@ -119,12 +117,6 @@
 					}
 				})
 			},
-			//获取一言
-			getHitokoto() {
-				getHitokoto().then(res => {
-					this.hitokoto = res
-				})
-			}
 		}
 	}
 </script>

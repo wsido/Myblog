@@ -7,7 +7,7 @@ import './assets/css/base.css'
 //阿里icon
 import './assets/css/icon/iconfont.css'
 //typo.css
-import "./assets/css/typo.css";
+import "./assets/css/typo.css"
 //semantic-ui
 import 'semantic-ui-css/semantic.min.css'
 //element-ui
@@ -16,15 +16,15 @@ import 'element-ui/lib/theme-chalk/index.css'
 //moment
 import './util/dateTimeFormatUtils.js'
 //v-viewer
-import 'viewerjs/dist/viewer.css'
 import Viewer from 'v-viewer'
+import 'viewerjs/dist/viewer.css'
 //directive
 import './util/directive'
 //懒加载
 import VueLazyload from 'vue-lazyload'
 
 console.log(
-	'%c NBlog %c By Naccl %c https://github.com/Naccl/NBlog',
+	'%c NBlog %c By wsido %c https://github.com/wsido/Myblog',
 	'background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff',
 	'background:#41b883 ; padding: 1px; border-radius: 0 3px 3px 0;  color: #000',
 	'background:transparent'

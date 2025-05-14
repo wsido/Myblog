@@ -30,11 +30,20 @@ public class JwtFilter extends GenericFilterBean {
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
-		//后台管理路径外的请求直接跳过
-		if (!request.getRequestURI().startsWith(request.getContextPath() + "/admin")) {
+		//后台管理和需要认证的用户路径外的请求直接跳过
+		String requestURI = request.getRequestURI();
+		String contextPath = request.getContextPath();
+		if (!requestURI.startsWith(contextPath + "/admin") && !requestURI.startsWith(contextPath + "/user")) {
 			filterChain.doFilter(request, servletResponse);
 			return;
 		}
+		
+		// 注册请求不需要验证token
+		if (requestURI.equals(contextPath + "/user/register")) {
+			filterChain.doFilter(request, servletResponse);
+			return;
+		}
+		
 		String jwt = request.getHeader("Authorization");
 		if (JwtUtils.judgeTokenIsExist(jwt)) {
 			try {

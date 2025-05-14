@@ -2,6 +2,7 @@ package top.wsido.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
+
 import top.wsido.entity.User;
 
 /**
@@ -17,4 +18,10 @@ public interface UserMapper {
 	User findById(Long id);
 
 	int updateUserByUsername(String username, User user);
+	
+	// 插入新用户
+	int insertUser(User user);
+	
+	// 根据ID更新用户信息
+	int updateById(User user);
 }

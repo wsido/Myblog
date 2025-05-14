@@ -48,7 +48,7 @@ const routes = [
 				path: 'moment/write',
 				name: 'WriteMoment',
 				component: () => import('@/views/blog/moment/WriteMoment'),
-				meta: {title: '写动态', icon: 'el-icon-edit'}
+				meta: {title: '写动态', icon: 'el-icon-edit', adminRequired: true}
 			},
 			{
 				path: 'edit/:id',
@@ -61,7 +61,7 @@ const routes = [
 				path: 'moment/edit/:id',
 				name: 'EditMoment',
 				component: () => import('@/views/blog/moment/WriteMoment'),
-				meta: {title: '编辑动态', icon: 'el-icon-edit'},
+				meta: {title: '编辑动态', icon: 'el-icon-edit', adminRequired: true},
 				hidden: true
 			},
 			{
@@ -74,19 +74,19 @@ const routes = [
 				path: 'moment/list',
 				name: 'MomentList',
 				component: () => import('@/views/blog/moment/MomentList'),
-				meta: {title: '动态管理', icon: 'el-icon-chat-dot-round'}
+				meta: {title: '动态管理', icon: 'el-icon-chat-dot-round', adminRequired: true}
 			},
 			{
 				path: 'category/list',
 				name: 'CategoryList',
 				component: () => import('@/views/blog/category/CategoryList'),
-				meta: {title: '分类管理', icon: 'el-icon-s-opportunity'}
+				meta: {title: '分类管理', icon: 'el-icon-s-opportunity', adminRequired: true}
 			},
 			{
 				path: 'tag/list',
 				name: 'TagList',
 				component: () => import('@/views/blog/tag/TagList'),
-				meta: {title: '标签管理', icon: 'biaoqian'}
+				meta: {title: '标签管理', icon: 'biaoqian', adminRequired: true}
 			},
 			{
 				path: 'comment/list',
@@ -101,25 +101,25 @@ const routes = [
 		name: 'Page',
 		redirect: '/page/site',
 		component: Layout,
-		meta: {title: '页面管理', icon: 'el-icon-document-copy'},
+		meta: {title: '页面管理', icon: 'el-icon-document-copy', adminRequired: true},
 		children: [
 			{
 				path: 'site',
 				name: 'SiteSetting',
 				component: () => import('@/views/page/SiteSetting'),
-				meta: {title: '站点设置', icon: 'bianjizhandian'}
+				meta: {title: '站点设置', icon: 'bianjizhandian', adminRequired: true}
 			},
 			{
 				path: 'friend',
 				name: 'FriendList',
 				component: () => import('@/views/page/FriendList'),
-				meta: {title: '友链管理', icon: 'friend'}
+				meta: {title: '友链管理', icon: 'friend', adminRequired: true}
 			},
 			{
 				path: 'about',
 				name: 'About',
 				component: () => import('@/views/page/About'),
-				meta: {title: '关于我', icon: 'el-icon-tickets'}
+				meta: {title: '关于我', icon: 'el-icon-tickets', adminRequired: true}
 			},
 		]
 	},
@@ -128,26 +128,26 @@ const routes = [
 		name: 'PictureHosting',
 		redirect: '/pictureHosting/setting',
 		component: Layout,
-		meta: {title: '图床管理', icon: 'el-icon-picture'},
+		meta: {title: '图床管理', icon: 'el-icon-picture', adminRequired: true},
 		children: [
 			{
 				path: 'setting',
 				name: 'Setting',
 				component: () => import('@/views/pictureHosting/Setting'),
-				meta: {title: '配置', icon: 'el-icon-setting'}
+				meta: {title: '配置', icon: 'el-icon-setting', adminRequired: true}
 			},
 			{
 				path: 'github',
 				name: 'GithubManage',
 				component: () => import('@/views/pictureHosting/GithubManage'),
-				meta: {title: 'GitHub', icon: 'el-icon-folder-opened'}
+				meta: {title: 'GitHub', icon: 'el-icon-folder-opened', adminRequired: true}
 			},
 			
 			{
 				path: 'txyun',
 				name: 'TxyunManage',
 				component: () => import('@/views/pictureHosting/TxyunManage'),
-				meta: {title: '腾讯云', icon: 'el-icon-folder-opened'}
+				meta: {title: '腾讯云', icon: 'el-icon-folder-opened', adminRequired: true}
 			},
 		]
 	},
@@ -168,7 +168,7 @@ const routes = [
 				path: 'job',
 				name: 'JobList',
 				component: () => import('@/views/system/ScheduleJobList'),
-				meta: {title: '定时任务', icon: 'el-icon-alarm-clock'}
+				meta: {title: '定时任务', icon: 'el-icon-alarm-clock', adminRequired: true}
 			},
 		]
 	},
@@ -177,37 +177,37 @@ const routes = [
 		name: 'Log',
 		redirect: '/log/job',
 		component: Layout,
-		meta: {title: '日志管理', icon: 'el-icon-document'},
+		meta: {title: '日志管理', icon: 'el-icon-document', adminRequired: true},
 		children: [
 			{
 				path: 'job',
 				name: 'JobLog',
 				component: () => import('@/views/log/ScheduleJobLog'),
-				meta: {title: '任务日志', icon: 'el-icon-alarm-clock'}
+				meta: {title: '任务日志', icon: 'el-icon-alarm-clock', adminRequired: true}
 			},
 			{
 				path: 'login',
 				name: 'LoginLog',
 				component: () => import('@/views/log/LoginLog'),
-				meta: {title: '登录日志', icon: 'el-icon-finished'}
+				meta: {title: '登录日志', icon: 'el-icon-finished', adminRequired: true}
 			},
 			{
 				path: 'operation',
 				name: 'OperationLog',
 				component: () => import('@/views/log/OperationLog'),
-				meta: {title: '操作日志', icon: 'el-icon-document-checked'}
+				meta: {title: '操作日志', icon: 'el-icon-document-checked', adminRequired: true}
 			},
 			{
 				path: 'exception',
 				name: 'ExceptionLog',
 				component: () => import('@/views/log/ExceptionLog'),
-				meta: {title: '异常日志', icon: 'el-icon-document-delete'}
+				meta: {title: '异常日志', icon: 'el-icon-document-delete', adminRequired: true}
 			},
 			{
 				path: 'visit',
 				name: 'VisitLog',
 				component: () => import('@/views/log/VisitLog'),
-				meta: {title: '访问日志', icon: 'el-icon-data-line'}
+				meta: {title: '访问日志', icon: 'el-icon-data-line', adminRequired: true}
 			},
 		]
 	},
@@ -216,13 +216,13 @@ const routes = [
 		name: 'Statistics',
 		redirect: '/statistics/visitor',
 		component: Layout,
-		meta: {title: '数据统计', icon: 'el-icon-s-data'},
+		meta: {title: '数据统计', icon: 'el-icon-s-data', adminRequired: true},
 		children: [
 			{
 				path: 'visitor',
 				name: 'Visitor',
 				component: () => import('@/views/statistics/Visitor'),
-				meta: {title: '访客统计', icon: 'el-icon-s-marketing'}
+				meta: {title: '访客统计', icon: 'el-icon-s-marketing', adminRequired: true}
 			},
 		]
 	},
@@ -243,6 +243,15 @@ router.beforeEach((to, from, next) => {
 		//获取token
 		const tokenStr = window.localStorage.getItem('token')
 		if (!tokenStr) return next("/login")
+		
+		//检查用户角色和路由权限
+		if (to.meta.adminRequired === true) {
+			const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+			if (userInfo.type !== 'admin') {
+				Vue.prototype.$message.error('权限不足，无法访问该页面')
+				return next(from.path)
+			}
+		}
 	}
 	document.title = getPageTitle(to.meta.title)
 	next()

@@ -10,7 +10,7 @@
 					<img :src="user.avatar" class="user-avatar">
 				</div>
 				<el-dropdown-menu slot="dropdown" class="user-dropdown">
-					<a target="_blank" href="https://github.com/Naccl/NBlog">
+					<a target="_blank" href="https://github.com/wsido/NBlog">
 						<el-dropdown-item>
 							<SvgIcon icon-class="github" class-name="svg"/>
 							<span>GitHub</span>
@@ -27,10 +27,10 @@
 </template>
 
 <script>
-	import {mapGetters} from 'vuex'
 	import Breadcrumb from '@/components/Breadcrumb'
-	import Hamburger from '@/components/Hamburger'
-	import SvgIcon from '@/components/SvgIcon'
+import Hamburger from '@/components/Hamburger'
+import SvgIcon from '@/components/SvgIcon'
+import { mapGetters } from 'vuex'
 
 	export default {
 		components: {

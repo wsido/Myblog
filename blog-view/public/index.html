@@ -8,6 +8,15 @@
 	<title>NBlog</title>
     <link rel="stylesheet" href="<%= BASE_URL %>lib/css/prism.css">
 	<link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/aplayer/1.10.1/APlayer.min.css">
+	<style>
+		/* 临时样式：当CDN图片无法加载时使用纯色背景 */
+		body {
+			background-color: #f5f5f5 !important;
+		}
+		.ui.inverted.segment {
+			background-color: #1b1c1d !important;
+		}
+	</style>
 </head>
 <body>
 	<noscript>
@@ -17,7 +26,7 @@
     <script src="<%= BASE_URL %>lib/js/prism.js" data-manual></script>
 	<script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/aplayer/1.10.1/APlayer.min.js"></script>
     <script>
-		var meting_api='https://api.naccl.top/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r';
+		var meting_api='https://api.wsido.top/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r';
     </script>
 	<script src="<%= BASE_URL %>lib/js/Meting.min.js"></script>
 	<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/tocbot/4.6.0/tocbot.min.js"></script>

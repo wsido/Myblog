@@ -9,7 +9,7 @@
 			<el-input :class="'textarea'" type="textarea" :rows="5" v-model="commentForm.content" placeholder="评论千万条，友善第一条"
 			          maxlength="250" show-word-limit :validate-event="false"></el-input>
 			<div class="el-form-item el-form-item--small emoji">
-				<img src="https://cdn.naccl.top/blog/img/paopao/1.png" @click="showEmojiBox">
+				<img src="https://cdn.wsido.top/blog/img/paopao/1.png" @click="showEmojiBox">
 				<div class="mask" v-show="emojiShow" @click="hideEmojiBox"></div>
 				<div class="emoji-box" v-show="emojiShow">
 					<div class="emoji-title">
@@ -32,13 +32,13 @@
 					</div>
 					<div class="emoji-tabs">
 						<a class="tab-link" :class="{'on':activeEmojiTab===0}" @click="activeEmojiTab=0">
-							<img src="https://cdn.naccl.top/blog/img/tv/1.png">
+							<img src="https://cdn.wsido.top/blog/img/tv/1.png">
 						</a>
 						<a class="tab-link" :class="{'on':activeEmojiTab===1}" @click="activeEmojiTab=1">
-							<img src="https://cdn.naccl.top/blog/img/aru/1.png">
+							<img src="https://cdn.wsido.top/blog/img/aru/1.png">
 						</a>
 						<a class="tab-link" :class="{'on':activeEmojiTab===2}" @click="activeEmojiTab=2">
-							<img src="https://cdn.naccl.top/blog/img/paopao/1.png">
+							<img src="https://cdn.wsido.top/blog/img/paopao/1.png">
 						</a>
 					</div>
 				</div>
@@ -71,12 +71,12 @@
 </template>
 
 <script>
-	import {mapState} from 'vuex'
-	import {checkEmail, checkUrl} from "@/common/reg";
-	import {SET_PARENT_COMMENT_ID} from "@/store/mutations-types";
-	import tvMapper from '@/plugins/tvMapper.json'
-	import aruMapper from '@/plugins/aruMapper.json'
-	import paopaoMapper from '@/plugins/paopaoMapper.json'
+	import { checkEmail, checkUrl } from "@/common/reg";
+import aruMapper from '@/plugins/aruMapper.json';
+import paopaoMapper from '@/plugins/paopaoMapper.json';
+import tvMapper from '@/plugins/tvMapper.json';
+import { SET_PARENT_COMMENT_ID } from "@/store/mutations-types";
+import { mapState } from 'vuex';
 
 	const validateWebsite = (rule, value, callback) => {
 		if (value) {

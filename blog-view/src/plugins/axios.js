@@ -1,6 +1,6 @@
 import axios from "axios";
-import NProgress from 'nprogress'
-import 'nprogress/nprogress.css'
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
 
 const request = axios.create({
 	baseURL: 'http://localhost:8090/',
@@ -16,6 +16,13 @@ request.interceptors.request.use(
 		if (identification && !(config.url.startsWith('http://') || config.url.startsWith('https://'))) {
 			config.headers.identification = identification
 		}
+		
+		// 添加用户token到请求头
+		const userToken = window.localStorage.getItem('userToken')
+		if (userToken) {
+			config.headers.Authorization = userToken
+		}
+		
 		return config
 	}
 )

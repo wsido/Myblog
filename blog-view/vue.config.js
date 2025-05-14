@@ -34,5 +34,16 @@ module.exports = {
 				},
 			},
 		}
+	},
+	devServer: {
+		// proxy: { //移除了proxy配置
+		// 	'/hitokoto': {
+		// 		target: 'https://v1.hitokoto.cn',
+		// 		changeOrigin: true,
+		// 		pathRewrite: {
+		// 			'^/hitokoto': ''
+		// 		}
+		// 	}
+		// }
 	}
 }

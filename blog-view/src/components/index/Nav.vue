@@ -36,6 +36,32 @@
 					<span class="content">{{ item.content }}</span>
 				</template>
 			</el-autocomplete>
+			
+			<!-- 用户入口下拉菜单 -->
+			<template v-if="isLoggedIn">
+				<el-dropdown trigger="click" @command="handleUserCommand" class="user-dropdown item" :class="{'m-mobile-hide': mobileHide}">
+					<span class="el-dropdown-link">
+						<i class="user icon"></i>{{ userInfo.nickname || userInfo.username }}<i class="caret down icon"></i>
+					</span>
+					<el-dropdown-menu slot="dropdown">
+						<el-dropdown-item command="userCenter"><i class="user circle icon"></i> 个人中心</el-dropdown-item>
+						<el-dropdown-item command="userBlogs"><i class="file alternate icon"></i> 我的博客</el-dropdown-item>
+						<el-dropdown-item command="userFavorites"><i class="star icon"></i> 我的收藏</el-dropdown-item>
+						<el-dropdown-item divided command="logout"><i class="sign-out icon"></i> 退出登录</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
+			</template>
+			<template v-else>
+				<div class="right menu" :class="{'m-mobile-hide': mobileHide}">
+					<router-link to="/login" class="item">
+						<i class="sign-in icon"></i>登录
+					</router-link>
+					<router-link to="/register" class="item">
+						<i class="user plus icon"></i>注册
+					</router-link>
+				</div>
+			</template>
+			
 			<button class="ui menu black icon button m-right-top m-mobile-show" @click="toggle">
 				<i class="sidebar icon"></i>
 			</button>
@@ -44,8 +70,9 @@
 </template>
 
 <script>
-	import {getSearchBlogList} from "@/api/blog";
-	import {mapState} from 'vuex'
+	import { getSearchBlogList } from "@/api/blog";
+import { getUserInfo } from "@/api/user";
+import { mapState } from 'vuex';
 
 	export default {
 		name: "Nav",
@@ -64,7 +91,9 @@
 				mobileHide: true,
 				queryString: '',
 				queryResult: [],
-				timer: null
+				timer: null,
+				isLoggedIn: false,
+				userInfo: {}
 			}
 		},
 		computed: {
@@ -76,25 +105,35 @@
 				this.mobileHide = true
 			}
 		},
+		created() {
+			this.checkLoginStatus()
+		},
 		mounted() {
 			//监听页面滚动位置，改变导航栏的显示
 			window.addEventListener('scroll', () => {
 				//首页且不是移动端
 				if (this.$route.name === 'home' && this.clientSize.clientWidth > 768) {
 					if (window.scrollY > this.clientSize.clientHeight / 2) {
-						this.$refs.nav.classList.remove('transparent')
+						if (this.$refs.nav && this.$refs.nav.classList) {
+							this.$refs.nav.classList.remove('transparent')
+						}
 					} else {
-						this.$refs.nav.classList.add('transparent')
+						if (this.$refs.nav && this.$refs.nav.classList) {
+							this.$refs.nav.classList.add('transparent')
+						}
 					}
 				}
 			})
 			//监听点击事件，收起导航菜单
 			document.addEventListener('click', (e) => {
-				//遍历冒泡
-				let flag = this.$refs.nav.contains(e.target)
-				//如果导航栏是打开状态，且点击的元素不是Nav的子元素，则收起菜单
-				if (!this.mobileHide && !flag) {
-					this.mobileHide = true
+				//确保$refs.nav存在后再进行操作
+				if (this.$refs.nav) {
+					//遍历冒泡
+					let flag = this.$refs.nav.contains(e.target)
+					//如果导航栏是打开状态，且点击的元素不是Nav的子元素，则收起菜单
+					if (!this.mobileHide && !flag) {
+						this.mobileHide = true
+					}
 				}
 			})
 		},
@@ -135,6 +174,51 @@
 			handleSelect(item) {
 				if (item.id) {
 					this.$router.push(`/blog/${item.id}`)
+				}
+			},
+			checkLoginStatus() {
+				const token = window.localStorage.getItem('userToken')
+				if (token) {
+					this.isLoggedIn = true
+					this.fetchUserInfo()
+				} else {
+					this.isLoggedIn = false
+				}
+			},
+			fetchUserInfo() {
+				getUserInfo().then(res => {
+					if (res.code === 200) {
+						this.userInfo = res.data
+					} else {
+						// 获取信息失败，可能是token过期
+						this.logout()
+					}
+				}).catch(() => {
+					this.logout()
+				})
+			},
+			handleUserCommand(command) {
+				if (command === 'logout') {
+					this.logout()
+				} else if (command === 'userCenter') {
+					this.$router.push('/user/center')
+				} else if (command === 'userBlogs') {
+					this.$router.push('/user/blogs')
+				} else if (command === 'userFavorites') {
+					this.$router.push('/user/favorites')
+				}
+			},
+			logout() {
+				// 先检查是否真的需要登出，避免重复提示
+				if (!this.isLoggedIn) return
+				
+				window.localStorage.removeItem('userToken')
+				this.isLoggedIn = false
+				this.userInfo = {}
+				this.$message.success('退出登录成功')
+				// 如果当前在需要登录的页面，重定向到登录页
+				if (this.$route.meta.requireAuth) {
+					this.$router.push('/login')
 				}
 			}
 		}
@@ -231,5 +315,9 @@
 		text-overflow: ellipsis;
 		font-size: 12px;
 		color: rgba(0, 0, 0, .70);
+	}
+	
+	.user-dropdown {
+		margin-left: auto;
 	}
 </style>

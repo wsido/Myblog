@@ -1,11 +1,13 @@
 package top.wsido.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
 import top.wsido.entity.Comment;
 import top.wsido.model.vo.PageComment;
-
-import java.util.List;
 
 /**
  * @Description: 博客评论持久层接口
@@ -38,4 +40,11 @@ public interface CommentMapper {
 	int countComment();
 
 	int saveComment(top.wsido.model.dto.Comment comment);
+
+	/**
+	 * 根据用户ID统计其所有博客收到的公开评论总数
+	 * @param userId 博客作者的用户ID
+	 * @return 公开评论总数
+	 */
+	Integer countCommentsByUserId(@Param("userId") Long userId);
 }

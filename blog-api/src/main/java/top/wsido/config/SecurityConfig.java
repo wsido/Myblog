@@ -48,14 +48,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 				//放行获取网页标题后缀的请求
 				.antMatchers("/admin/webTitleSuffix").permitAll()
+				//放行用户注册接口
+				.antMatchers("/user/register").permitAll()
 				//任何 /admin 开头的路径下的请求都需要经过JWT验证
 				.antMatchers(HttpMethod.GET, "/admin/**").hasAnyRole("admin", "visitor")
 				.antMatchers("/admin/**").hasRole("admin")
+				//用户相关接口需要user角色
+				.antMatchers("/user/**").hasAnyRole("admin", "user")
 				//其它路径全部放行
 				.anyRequest().permitAll()
 				.and()
 				//自定义JWT过滤器
 				.addFilterBefore(new JwtLoginFilter("/admin/login", authenticationManager(), loginLogService), UsernamePasswordAuthenticationFilter.class)
+				//添加普通用户登录过滤器
+				.addFilterBefore(new JwtLoginFilter("/user/login", authenticationManager(), loginLogService), UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(new JwtFilter(), UsernamePasswordAuthenticationFilter.class)
 				//未登录时，返回json，在前端执行重定向
 				.exceptionHandling().authenticationEntryPoint(myAuthenticationEntryPoint);
