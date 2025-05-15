@@ -1,4 +1,4 @@
-package top.naccl;
+package top.wsido;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

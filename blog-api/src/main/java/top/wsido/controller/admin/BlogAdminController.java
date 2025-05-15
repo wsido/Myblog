@@ -1,7 +1,11 @@
 package top.wsido.controller.admin;
 
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,11 +16,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+
 import top.wsido.annotation.OperationLogger;
 import top.wsido.entity.Blog;
 import top.wsido.entity.Category;
 import top.wsido.entity.Tag;
-import top.wsido.entity.User;
 import top.wsido.model.dto.BlogVisibility;
 import top.wsido.model.vo.Result;
 import top.wsido.service.BlogService;
@@ -24,12 +31,6 @@ import top.wsido.service.CategoryService;
 import top.wsido.service.CommentService;
 import top.wsido.service.TagService;
 import top.wsido.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @Description: 博客文章后台管理
@@ -248,9 +249,9 @@ public class BlogAdminController {
 		if ("save".equals(type)) {
 			blog.setCreateTime(date);
 			blog.setUpdateTime(date);
-			User user = new User();
-			user.setId(1L);//个人博客默认只有一个作者
-			blog.setUser(user);
+			// User user = new User(); // REMOVED
+			// user.setId(1L); // REMOVED
+			// blog.setUser(user); // REMOVED - User will be set in BlogServiceImpl
 
 			blogService.saveBlog(blog);
 			//关联博客和标签(维护 blog_tag 表)

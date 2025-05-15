@@ -9,7 +9,7 @@
 			</el-col>
 		</el-row>
 
-		<el-table :data="commentList" row-key="id" :tree-props="{children: 'replyComments'}" indent="0">
+		<el-table :data="commentList" row-key="id" :tree-props="{children: 'replyComments'}" :indent="0">
 			<el-table-column label="评论ID" prop="id"></el-table-column>
 			<el-table-column label="头像" width="70">
 				<template v-slot="scope">
@@ -94,9 +94,9 @@
 </template>
 
 <script>
-	import Breadcrumb from "@/components/Breadcrumb";
-	import {getCommentListByQuery, getBlogList, updatePublished, updateNotice, deleteCommentById, editComment} from '@/api/comment'
-	import {checkEmail} from "@/util/reg";
+	import { deleteCommentById, editComment, getBlogList, getCommentListByQuery, updateNotice, updatePublished } from '@/api/comment';
+import Breadcrumb from "@/components/Breadcrumb";
+import { checkEmail } from "@/util/reg";
 
 	export default {
 		name: "CommentList",

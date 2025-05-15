@@ -119,11 +119,13 @@ export default {
     },
     goToWrite() {
       // 跳转到后台写文章页面，使用完整URL
-      window.open('http://localhost:8080/admin/#/blog/write', '_blank')
+      // Assuming admin (CMS) is served at /admin/
+      window.open('http://localhost:8080/admin/#/blog-user/write', '_blank')
     },
     editBlog(blog) {
       // 跳转到后台编辑页面，使用完整URL
-      window.open(`http://localhost:8080/admin/#/blog/edit/${blog.id}`, '_blank')
+      // Assuming admin (CMS) is served at /admin/
+      window.open(`http://localhost:8080/admin/#/blog-user/edit/${blog.id}`, '_blank')
     },
     changeBlogVisibility(blog) {
       const newVisibility = {

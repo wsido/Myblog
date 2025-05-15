@@ -103,8 +103,8 @@
 </template>
 
 <script>
-	import Breadcrumb from "@/components/Breadcrumb";
-	import {getCategoryAndTag, saveBlog, getBlogById, updateBlog} from '@/api/blog'
+	import { getBlogById, getCategoryAndTag, saveBlog, updateBlog } from '@/api/blog';
+import Breadcrumb from "@/components/Breadcrumb";
 
 	export default {
 		name: "WriteBlog",
@@ -196,12 +196,12 @@
 							this.form.tags = null
 							updateBlog(this.form).then(res => {
 								this.msgSuccess(res.msg)
-								this.$router.push('/blog/list')
+								this.$router.push('/blog-user/list')
 							})
 						} else {
 							saveBlog(this.form).then(res => {
 								this.msgSuccess(res.msg)
-								this.$router.push('/blog/list')
+								this.$router.push('/blog-user/list')
 							})
 						}
 					} else {

@@ -18,12 +18,12 @@
 			<el-table-column label="分类" prop="category.name" width="150"></el-table-column>
 			<el-table-column label="置顶" width="80">
 				<template v-slot="scope">
-					<el-switch v-model="scope.row.top" @change="blogTopChanged(scope.row)"></el-switch>
+					<el-switch v-if="isAdmin" v-model="scope.row.top" @change="blogTopChanged(scope.row)"></el-switch>
 				</template>
 			</el-table-column>
 			<el-table-column label="推荐" width="80">
 				<template v-slot="scope">
-					<el-switch v-model="scope.row.recommend" @change="blogRecommendChanged(scope.row)"></el-switch>
+					<el-switch v-if="isAdmin" v-model="scope.row.recommend" @change="blogRecommendChanged(scope.row)"></el-switch>
 				</template>
 			</el-table-column>
 			<el-table-column label="可见性" width="100">
@@ -42,7 +42,7 @@
 			<el-table-column label="操作" width="200">
 				<template v-slot="scope">
 					<el-button type="primary" icon="el-icon-edit" size="mini" @click="goBlogEditPage(scope.row.id)">编辑</el-button>
-					<el-popconfirm title="确定删除吗？" icon="el-icon-delete" iconColor="red" @onConfirm="deleteBlogById(scope.row.id)">
+					<el-popconfirm v-if="isAdmin || (scope.row.user && scope.row.user.id === userId)" title="确定删除吗？" icon="el-icon-delete" iconColor="red" @onConfirm="deleteBlogById(scope.row.id)">
 						<el-button size="mini" type="danger" icon="el-icon-delete" slot="reference">删除</el-button>
 					</el-popconfirm>
 				</template>
@@ -96,8 +96,9 @@
 </template>
 
 <script>
-	import Breadcrumb from "@/components/Breadcrumb";
-	import {getDataByQuery, deleteBlogById, updateTop, updateRecommend, updateVisibility} from '@/api/blog'
+	import { deleteBlogById, getDataByQuery, updateRecommend, updateTop, updateVisibility } from '@/api/blog';
+import Breadcrumb from "@/components/Breadcrumb";
+import { mapGetters } from 'vuex';
 
 	export default {
 		name: "BlogList",
@@ -124,6 +125,12 @@
 					published: false,
 					password: '',
 				}
+			}
+		},
+		computed: {
+			...mapGetters(['roles', 'userId']),
+			isAdmin() {
+				return this.roles && this.roles.includes('admin');
 			}
 		},
 		created() {

@@ -55,6 +55,41 @@
                 and b.category_id=#{categoryId}
             </if>
         </where>
+        ORDER BY b.is_top DESC, b.create_time DESC
+    </select>
+
+    <!-- New query for getListByUserIdAndTitleAndCategoryId -->
+    <select id="getListByUserIdAndTitleAndCategoryId" resultMap="blog">
+        SELECT
+            b.id, b.title, b.first_picture, b.content, b.description,
+            b.is_published, b.is_recommend, b.is_appreciation, b.is_comment_enabled,
+            b.is_top, b.create_time, b.update_time, b.views, b.words, b.read_time, b.password,
+            b.user_id,      <!-- 用于 resultMap blog.user.id -->
+            b.category_id,  <!-- 用于 resultMap blog.category.id -->
+            
+            c.category_name, <!-- 直接映射到 category.name (resultMap column="category_name") -->
+            
+            u.username,    <!-- 直接映射到 user.username (resultMap column="username") -->
+            u.nickname,    <!-- 直接映射到 user.nickname (resultMap column="nickname") -->
+            u.avatar,      <!-- 直接映射到 user.avatar (resultMap column="avatar") -->
+            u.email,       <!-- 直接映射到 user.email (resultMap column="email") -->
+            u.create_time AS user_create_time, <!-- 映射到 user.createTime (resultMap column="user_create_time") -->
+            u.update_time AS user_update_time, <!-- 映射到 user.updateTime (resultMap column="user_update_time") -->
+            u.role         <!-- 直接映射到 user.role (resultMap column="role") -->
+        FROM
+            blog b
+        LEFT JOIN category c ON b.category_id = c.id
+        LEFT JOIN user u ON b.user_id = u.id
+        <where>
+            b.user_id = #{userId}
+            <if test="title != null and title != ''">
+                AND b.title LIKE concat('%',#{title},'%')
+            </if>
+            <if test="categoryId != null">
+                AND b.category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY b.create_time DESC
     </select>
 
     <resultMap id="searchBlog" type="top.wsido.model.vo.SearchBlog">

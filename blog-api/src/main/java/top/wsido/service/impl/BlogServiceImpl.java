@@ -8,6 +8,8 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +18,12 @@ import com.github.pagehelper.PageInfo;
 
 import top.wsido.constant.RedisKeyConstants;
 import top.wsido.entity.Blog;
+import top.wsido.entity.User;
+import top.wsido.exception.ForbiddenException;
 import top.wsido.exception.NotFoundException;
 import top.wsido.exception.PersistenceException;
 import top.wsido.mapper.BlogMapper;
+import top.wsido.mapper.UserMapper;
 import top.wsido.model.dto.BlogView;
 import top.wsido.model.dto.BlogVisibility;
 import top.wsido.model.vo.ArchiveBlog;
@@ -32,6 +37,7 @@ import top.wsido.service.BlogService;
 import top.wsido.service.RedisService;
 import top.wsido.service.TagService;
 import top.wsido.util.JacksonUtils;
+import top.wsido.util.SecurityUtils;
 import top.wsido.util.markdown.MarkdownUtils;
 
 /**
@@ -44,9 +50,13 @@ public class BlogServiceImpl implements BlogService {
 	@Autowired
 	BlogMapper blogMapper;
 	@Autowired
+	UserMapper userMapper;
+	@Autowired
 	TagService tagService;
 	@Autowired
 	RedisService redisService;
+	@Autowired
+	SecurityUtils securityUtils;
 	//随机博客显示5条
 	private static final int randomBlogLimitNum = 5;
 	//最新推荐博客显示3条
@@ -74,7 +84,60 @@ public class BlogServiceImpl implements BlogService {
 
 	@Override
 	public List<Blog> getListByTitleAndCategoryId(String title, Integer categoryId) {
-		return blogMapper.getListByTitleAndCategoryId(title, categoryId);
+		List<Blog> blogList;
+		Long currentUserId = null;
+		boolean isAdmin = false;
+
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		if (authentication != null && authentication.isAuthenticated() && !("anonymousUser".equals(authentication.getPrincipal()))) {
+			Object principal = authentication.getPrincipal();
+			User userEntity = null;
+
+			if (principal instanceof User) {
+				userEntity = (User) principal;
+			} else if (principal instanceof String) { // Principal is username string
+				// Temporarily clear PageHelper's context to avoid interference
+				com.github.pagehelper.PageHelper.clearPage();
+				try {
+					userEntity = userMapper.findByUsername((String) principal);
+				} finally {
+					// If the main query blogMapper.getListByTitleAndCategoryId OR blogMapper.getListByUserIdAndTitleAndCategoryId
+					// is itself wrapped by PageHelper.startPage() EXTERNALLY (e.g., in the Controller or another service method that calls this),
+					// then clearing it here might affect that outer pagination.
+					// However, the typical PageHelper usage is PageHelper.startPage() right before the main list mapper call.
+					// The controller usually looks like:
+					//   PageHelper.startPage(pageNum, pageSize);
+					//   List<Blog> blogs = blogService.getListByTitleAndCategoryId(title, categoryId);
+					//   PageInfo<Blog> pageInfo = new PageInfo<>(blogs);
+					// In this scenario, the PageHelper.startPage() is for the *result* of getListByTitleAndCategoryId.
+					// The internal call to userMapper.findByUsername should NOT be paginated.
+					// So, clearing it here is correct. We don't need to restore it because the main blog list query
+					// will be executed under the original PageHelper.startPage() context set by the controller/outer service.
+				}
+			}
+
+			if (userEntity != null) {
+				currentUserId = userEntity.getId();
+				isAdmin = authentication.getAuthorities().stream()
+						.anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_admin"));
+				// Alternative check if User entity has a reliable 'type' or 'role' field directly:
+				// isAdmin = isAdmin || "admin".equalsIgnoreCase(userEntity.getType()) || "ROLE_admin".equals(userEntity.getRole());
+			}
+		}
+
+		if (!isAdmin) {
+			System.out.println("Warning: Non-admin user or unidentifiable admin accessing blog list. Filtering by user ID: " + currentUserId);
+			if (currentUserId == null) {
+				throw new ForbiddenException("用户未登录或无法识别用户ID，无法过滤博客列表");
+			}
+			blogList = blogMapper.getListByUserIdAndTitleAndCategoryId(currentUserId, title, categoryId);
+		} else {
+			System.out.println("Admin user accessing blog list.");
+			blogList = blogMapper.getListByTitleAndCategoryId(title, categoryId);
+		}
+
+		return blogList;
 	}
 
 	@Override
@@ -259,8 +322,20 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void deleteBlogById(Long id) {
-		if (blogMapper.deleteBlogById(id) != 1) {
+		Blog blog = blogMapper.getBlogById(id);
+		if (blog == null) {
 			throw new NotFoundException("该博客不存在");
+		}
+
+		if (!securityUtils.isAdmin()) {
+			Long currentUserId = securityUtils.getCurrentUserId();
+			if (currentUserId == null || !currentUserId.equals(blog.getUser().getId())) {
+				throw new ForbiddenException("无权删除该博客");
+			}
+		}
+
+		if (blogMapper.deleteBlogById(id) != 1) {
+			throw new PersistenceException("删除博客失败或博客不存在");
 		}
 		deleteBlogRedisCache();
 		redisService.deleteByHashKey(RedisKeyConstants.BLOG_VIEWS_MAP, id);
@@ -277,6 +352,12 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void saveBlog(top.wsido.model.dto.Blog blog) {
+		User currentUser = securityUtils.getCurrentUser();
+		if (currentUser == null) {
+			throw new ForbiddenException("用户未登录，无法保存博客");
+		}
+		blog.setUser(currentUser);
+
 		if (blogMapper.saveBlog(blog) != 1) {
 			throw new PersistenceException("添加博客失败");
 		}
@@ -295,6 +376,9 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void updateBlogRecommendById(Long blogId, Boolean recommend) {
+		if (!securityUtils.isAdmin()) {
+			throw new ForbiddenException("无权操作");
+		}
 		if (blogMapper.updateBlogRecommendById(blogId, recommend) != 1) {
 			throw new PersistenceException("操作失败");
 		}
@@ -303,6 +387,17 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void updateBlogVisibilityById(Long blogId, BlogVisibility blogVisibility) {
+		if (!securityUtils.isAdmin()) {
+			Blog existingBlog = blogMapper.getBlogById(blogId);
+			if (existingBlog == null) {
+				throw new NotFoundException("该博客不存在");
+			}
+			Long currentUserId = securityUtils.getCurrentUserId();
+			if (currentUserId == null || !currentUserId.equals(existingBlog.getUser().getId())) {
+				throw new ForbiddenException("无权修改该博客的可见性");
+			}
+		}
+
 		if (blogMapper.updateBlogVisibilityById(blogId, blogVisibility) != 1) {
 			throw new PersistenceException("操作失败");
 		}
@@ -314,6 +409,9 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void updateBlogTopById(Long blogId, Boolean top) {
+		if (!securityUtils.isAdmin()) {
+			throw new ForbiddenException("无权操作");
+		}
 		if (blogMapper.updateBlogTopById(blogId, top) != 1) {
 			throw new PersistenceException("操作失败");
 		}
@@ -379,6 +477,19 @@ public class BlogServiceImpl implements BlogService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void updateBlog(top.wsido.model.dto.Blog blog) {
+		Blog existingBlog = blogMapper.getBlogById(blog.getId());
+		if (existingBlog == null) {
+			throw new NotFoundException("该博客不存在，无法更新");
+		}
+
+		if (!securityUtils.isAdmin()) {
+			Long currentUserId = securityUtils.getCurrentUserId();
+			if (currentUserId == null || !currentUserId.equals(existingBlog.getUser().getId())) {
+				throw new ForbiddenException("无权更新该博客");
+			}
+		}
+		blog.setUser(existingBlog.getUser());
+
 		if (blogMapper.updateBlog(blog) != 1) {
 			throw new PersistenceException("更新博客失败");
 		}

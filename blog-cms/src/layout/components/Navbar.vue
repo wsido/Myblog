@@ -7,7 +7,7 @@
 		<div class="right-menu">
 			<el-dropdown class="avatar-container" trigger="click">
 				<div class="avatar-wrapper">
-					<img :src="user.avatar" class="user-avatar">
+					<img :src="avatar" class="user-avatar">
 				</div>
 				<el-dropdown-menu slot="dropdown" class="user-dropdown">
 					<a target="_blank" href="https://github.com/wsido/NBlog">
@@ -40,32 +40,33 @@ import { mapGetters } from 'vuex'
 		},
 		data() {
 			return {
-				user: null,
+				// user: null, // No longer needed in data if using getters
 			}
 		},
 		computed: {
 			...mapGetters([
 				'sidebar',
+				'name',    // Add name from Vuex getters
+				'avatar'   // Add avatar from Vuex getters
 			])
 		},
 		created() {
-			this.getUserInfo()
+			// this.getUserInfo() // No longer needed if using Vuex getters directly in template
 		},
 		methods: {
 			toggleSideBar() {
 				this.$store.dispatch('app/toggleSideBar')
 			},
-			getUserInfo() {
-				this.user = JSON.parse(window.localStorage.getItem('user') || null)
-				if (!this.user) {
-					this.$router.push('/login')
-				}
-			},
-			logout() {
-				window.localStorage.removeItem('token')
-				window.localStorage.removeItem('user')
-				this.$router.push('/login')
-				this.msgSuccess('退出成功')
+			// getUserInfo() { // Method no longer needed
+			// 	this.user = JSON.parse(window.localStorage.getItem('userInfo') || null)
+			// 	if (!this.user) {
+			// 		this.$router.push('/login')
+			// 	}
+			// },
+			async logout() {
+				await this.$store.dispatch('user/logout')
+				this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+				this.msgSuccess('退出成功');
 			}
 		}
 	}

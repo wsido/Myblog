@@ -25,7 +25,9 @@ import top.wsido.model.vo.SearchBlog;
 @Mapper
 @Repository
 public interface BlogMapper {
-	List<Blog> getListByTitleAndCategoryId(String title, Integer categoryId);
+	List<Blog> getListByTitleAndCategoryId(@Param("title") String title, @Param("categoryId") Integer categoryId);
+
+	List<Blog> getListByUserIdAndTitleAndCategoryId(@Param("userId") Long userId, @Param("title") String title, @Param("categoryId") Integer categoryId);
 
 	List<SearchBlog> getSearchBlogListByQueryAndIsPublished(String query);
 

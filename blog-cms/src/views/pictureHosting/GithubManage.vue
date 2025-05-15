@@ -54,12 +54,12 @@
 </template>
 
 <script>
-	import SvgIcon from "@/components/SvgIcon";
-	import {getUserRepos, getReposContents, delFile, upload} from "@/api/github";
-	import {isImgExt} from "@/util/validate";
-	import {randomUUID} from "@/util/uuid";
-	import {copy} from "@/util/copy";
-	import {taskQueue} from "@/util/task-queue";
+	import { delFile, getReposContents, getUserRepos, upload } from "@/api/github";
+import SvgIcon from "@/components/SvgIcon";
+import { copy } from "@/util/copy";
+import { taskQueue } from "@/util/task-queue";
+import { randomUUID } from "@/util/uuid";
+import { isImgExt } from "@/util/validate";
 
 	export default {
 		name: "GithubManage",
@@ -95,10 +95,17 @@
 		},
 		computed: {
 			realPath() {
+				if (!this.userInfo || !this.userInfo.login || !this.activeRepos) {
+					// Return a non-slash path or an empty string if essential info is missing
+					// to avoid constructing an invalid path that might lead to errors elsewhere.
+					return '（请先选择仓库并确保GitHub配置正确）'; 
+				}
 				if (this.isCustomPath) {
 					return `/${this.userInfo.login}/${this.activeRepos}/${this.customPath}`
 				}
-				return `/${this.userInfo.login}/${this.activeRepos}${this.activePath.join('/')}/`
+				// Ensure activePath is an array and join correctly. Add trailing slash if it's a directory path.
+				const currentPath = Array.isArray(this.activePath) ? this.activePath.join('/') : '';
+				return `/${this.userInfo.login}/${this.activeRepos}${currentPath ? '/' + currentPath : ''}/`
 			}
 		},
 		created() {
