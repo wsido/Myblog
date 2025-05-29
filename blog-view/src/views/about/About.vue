@@ -7,7 +7,7 @@
 		</div>
 		<!--评论-->
 		<div class="ui bottom teal attached segment threaded comments">
-			<CommentList :page="1" :blogId="null" v-if="about.commentEnabled==='true'"/>
+			<CommentList :page="1" :blogId="null" v-if="String(about.commentEnabled).toLowerCase() === 'true'"/>
 			<h3 class="ui header" v-else>评论已关闭</h3>
 		</div>
 	</div>

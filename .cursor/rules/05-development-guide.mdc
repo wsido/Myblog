@@ -1,0 +1,34 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 开发流程指引
+
+## 项目启动
+
+### 后端服务 (blog-api)
+1. 导入数据库脚本
+2. 修改数据库配置 [src/main/resources/application.yml](mdc:src/main/resources/application.yml)
+3. 运行主类 [NBlogApplication.java](mdc:src/main/java/top/wsido/NBlogApplication.java)
+
+### 管理系统 (blog-cms)
+1. 安装依赖：`npm install`
+2. 开发环境启动：`npm run serve`
+3. 生产环境构建：`npm run build`
+
+### 前端博客 (blog-view)
+1. 安装依赖：`npm install`
+2. 开发环境启动：`npm run serve`
+3. 生产环境构建：`npm run build`
+
+## 部署流程
+
+项目可以通过执行根目录的部署脚本一键部署：
+[deploy.sh](mdc:deploy.sh)
+
+## 常见问题与解决方案
+
+详见项目总结文档：
+[NBlog_Summary_and_Issues.md](mdc:NBlog_Summary_and_Issues.md)
+

@@ -25,11 +25,13 @@ public class LoginController {
 	UserService userService;
 
 	/**
-	 * 登录成功后，签发博主身份Token
+	 * 登录成功后，签发博主身份Token (此通用 /login 端点已废弃，
+	 * 登录应通过 /admin/login 或 /user/login 由 JwtLoginFilter 处理)
 	 *
 	 * @param loginInfo
 	 * @return
 	 */
+	/* Commenting out this problematic general /login endpoint
 	@PostMapping("/login")
 	public Result login(@RequestBody LoginInfo loginInfo) {
 		User user = userService.findUserByUsernameAndPassword(loginInfo.getUsername(), loginInfo.getPassword());
@@ -43,4 +45,5 @@ public class LoginController {
 		map.put("token", jwt);
 		return Result.ok("登录成功", map);
 	}
+	*/
 }

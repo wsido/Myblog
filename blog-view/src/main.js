@@ -72,6 +72,15 @@ Vue.prototype.scrollToTop = function () {
 
 Vue.config.productionTip = false
 
+// 应用初始化时，尝试恢复用户登录状态
+// store.state.userToken 已经在 state.js 中从 localStorage 初始化了
+if (store.state.userToken) {
+  store.dispatch('fetchUserInfo').catch(error => {
+    console.error("App initialization: failed to fetch user info with token. Token might be invalid.", error);
+    // fetchUserInfo action 内部会在失败时清除 token 和用户信息
+  });
+}
+
 new Vue({
 	router,
 	store,

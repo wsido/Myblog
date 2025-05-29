@@ -3,56 +3,87 @@
 <mapper namespace="top.wsido.mapper.BlogMapper">
 
     <resultMap id="blog" type="top.wsido.entity.Blog">
-        <id property="id" column="id"/>
-        <result property="title" column="title"/>
-        <result property="firstPicture" column="first_picture"/>
-        <result property="content" column="content"/>
-        <result property="description" column="description"/>
-        <result property="published" column="is_published"/>
-        <result property="recommend" column="is_recommend"/>
-        <result property="appreciation" column="is_appreciation"/>
-        <result property="commentEnabled" column="is_comment_enabled"/>
-        <result property="top" column="is_top"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
-        <result property="views" column="views"/>
-        <result property="words" column="words"/>
-        <result property="readTime" column="read_time"/>
-        <result property="password" column="password"/>
+        <id property="id" column="b_id"/>
+        <result property="title" column="b_title"/>
+        <result property="firstPicture" column="b_first_picture"/>
+        <result property="content" column="b_content"/>
+        <result property="description" column="b_description"/>
+        <result property="published" column="b_is_published"/>
+        <result property="recommend" column="b_is_recommend"/>
+        <result property="appreciation" column="b_is_appreciation"/>
+        <result property="commentEnabled" column="b_is_comment_enabled"/>
+        <result property="top" column="b_is_top"/>
+        <result property="createTime" column="b_create_time"/>
+        <result property="updateTime" column="b_update_time"/>
+        <result property="views" column="b_views"/>
+        <result property="words" column="b_words"/>
+        <result property="readTime" column="b_read_time"/>
+        <result property="password" column="b_password"/>
         <association property="user" javaType="top.wsido.entity.User">
-            <id property="id" column="user_id"/>
-            <result property="username" column="username"/>
-            <result property="nickname" column="nickname"/>
-            <result property="avatar" column="avatar"/>
-            <result property="email" column="email"/>
-            <result property="createTime" column="user_create_time"/>
-            <result property="updateTime" column="user_update_time"/>
-            <result property="role" column="role"/>
+            <id property="id" column="u_id"/>
+            <result property="username" column="u_username"/>
+            <result property="nickname" column="u_nickname"/>
+            <result property="avatar" column="u_avatar"/>
+            <result property="email" column="u_email"/>
+            <result property="createTime" column="u_create_time"/>
+            <result property="updateTime" column="u_update_time"/>
+            <result property="role" column="u_role"/>
         </association>
         <association property="category" javaType="top.wsido.entity.Category">
-            <id property="id" column="category_id"/>
-            <result property="name" column="category_name"/>
+            <id property="id" column="c_id"/>
+            <result property="name" column="c_category_name"/>
         </association>
         <collection property="tags" javaType="top.wsido.entity.Tag">
-            <id property="id" column="tag_id"/>
-            <result property="name" column="tag_name"/>
-            <result property="color" column="color"/>
+            <id property="id" column="t_id"/>
+            <result property="name" column="t_tag_name"/>
+            <result property="color" column="t_color"/>
         </collection>
     </resultMap>
 
     <!--按标题和分类查询博客List-->
     <select id="getListByTitleAndCategoryId" resultMap="blog">
         <bind name="titlePattern" value="'%' + title + '%'"/>
-        select b.id, b.title, b.first_picture, b.create_time, b.update_time, b.is_published, b.is_recommend, b.is_appreciation,
-        b.is_comment_enabled, b.is_top, b.password,
-        c.id as category_id, c.category_name
-        from blog as b left join category as c on b.category_id=c.id
+        SELECT 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.first_picture AS b_first_picture, 
+            b.content AS b_content, 
+            b.description AS b_description,
+            b.is_published AS b_is_published, 
+            b.is_recommend AS b_is_recommend, 
+            b.is_appreciation AS b_is_appreciation, 
+            b.is_comment_enabled AS b_is_comment_enabled,
+            b.is_top AS b_is_top, 
+            b.create_time AS b_create_time, 
+            b.update_time AS b_update_time, 
+            b.views AS b_views, 
+            b.words AS b_words, 
+            b.read_time AS b_read_time, 
+            b.password AS b_password,
+            
+            c.id AS c_id, 
+            c.category_name AS c_category_name,
+
+            u.id AS u_id,
+            u.username AS u_username,    
+            u.nickname AS u_nickname,    
+            u.avatar AS u_avatar,      
+            u.email AS u_email,       
+            u.create_time AS u_create_time, 
+            u.update_time AS u_update_time, 
+            u.role AS u_role
+        FROM 
+            blog AS b 
+        LEFT JOIN 
+            category AS c ON b.category_id = c.id
+        LEFT JOIN 
+            user AS u ON b.user_id = u.id
         <where>
-            <if test="title!=null and title!=''">
-                b.title like #{titlePattern}
+            <if test="title != null and title != ''">
+                b.title LIKE #{titlePattern}
             </if>
-            <if test="categoryId!=null">
-                and b.category_id=#{categoryId}
+            <if test="categoryId != null">
+                AND b.category_id = #{categoryId}
             </if>
         </where>
         ORDER BY b.is_top DESC, b.create_time DESC
@@ -61,21 +92,34 @@
     <!-- New query for getListByUserIdAndTitleAndCategoryId -->
     <select id="getListByUserIdAndTitleAndCategoryId" resultMap="blog">
         SELECT
-            b.id, b.title, b.first_picture, b.content, b.description,
-            b.is_published, b.is_recommend, b.is_appreciation, b.is_comment_enabled,
-            b.is_top, b.create_time, b.update_time, b.views, b.words, b.read_time, b.password,
-            b.user_id,      <!-- 用于 resultMap blog.user.id -->
-            b.category_id,  <!-- 用于 resultMap blog.category.id -->
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.first_picture AS b_first_picture, 
+            b.content AS b_content, 
+            b.description AS b_description,
+            b.is_published AS b_is_published, 
+            b.is_recommend AS b_is_recommend, 
+            b.is_appreciation AS b_is_appreciation, 
+            b.is_comment_enabled AS b_is_comment_enabled,
+            b.is_top AS b_is_top, 
+            b.create_time AS b_create_time, 
+            b.update_time AS b_update_time, 
+            b.views AS b_views, 
+            b.words AS b_words, 
+            b.read_time AS b_read_time, 
+            b.password AS b_password,
             
-            c.category_name, <!-- 直接映射到 category.name (resultMap column="category_name") -->
+            u.id AS u_id,
+            u.username AS u_username,    
+            u.nickname AS u_nickname,    
+            u.avatar AS u_avatar,      
+            u.email AS u_email,       
+            u.create_time AS u_create_time, 
+            u.update_time AS u_update_time, 
+            u.role AS u_role,
             
-            u.username,    <!-- 直接映射到 user.username (resultMap column="username") -->
-            u.nickname,    <!-- 直接映射到 user.nickname (resultMap column="nickname") -->
-            u.avatar,      <!-- 直接映射到 user.avatar (resultMap column="avatar") -->
-            u.email,       <!-- 直接映射到 user.email (resultMap column="email") -->
-            u.create_time AS user_create_time, <!-- 映射到 user.createTime (resultMap column="user_create_time") -->
-            u.update_time AS user_update_time, <!-- 映射到 user.updateTime (resultMap column="user_update_time") -->
-            u.role         <!-- 直接映射到 user.role (resultMap column="role") -->
+            c.id AS c_id,
+            c.category_name AS c_category_name
         FROM
             blog b
         LEFT JOIN category c ON b.category_id = c.id
@@ -131,39 +175,74 @@
     </select>
 
     <resultMap id="blogInfo" type="top.wsido.model.vo.BlogInfo">
-        <id property="id" column="id"/>
-        <result property="title" column="title"/>
-        <result property="description" column="description"/>
-        <result property="createTime" column="create_time"/>
-        <result property="views" column="views"/>
-        <result property="words" column="words"/>
-        <result property="readTime" column="read_time"/>
-        <result property="top" column="is_top"/>
-        <result property="password" column="password"/>
+        <id property="id" column="b_id"/>
+        <result property="title" column="b_title"/>
+        <result property="description" column="b_description"/>
+        <result property="createTime" column="b_create_time"/>
+        <result property="views" column="b_views"/>
+        <result property="words" column="b_words"/>
+        <result property="readTime" column="b_read_time"/>
+        <result property="top" column="b_is_top"/>
+        <result property="password" column="b_password"/>
         <association property="category" javaType="top.wsido.entity.Category">
-            <result property="name" column="category_name"/>
+            <result property="name" column="c_category_name"/>
         </association>
     </resultMap>
 
     <!--查询公开博客的简要信息-->
     <select id="getBlogInfoListByIsPublished" resultMap="blogInfo">
-        select b.id, b.title, b.description, b.is_top, b.create_time, b.views, b.words, b.read_time, b.password, c.category_name
+        select 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.description AS b_description, 
+            b.is_top AS b_is_top, 
+            b.create_time AS b_create_time, 
+            b.views AS b_views, 
+            b.words AS b_words, 
+            b.read_time AS b_read_time, 
+            b.password AS b_password, 
+            c.category_name AS c_category_name
         from blog as b left join category as c on b.category_id=c.id
         where b.is_published=true
     </select>
 
     <!--根据分类name查询公开博客List-->
     <select id="getBlogInfoListByCategoryNameAndIsPublished" resultMap="blogInfo">
-        select b.id, b.title, b.description, b.is_top, b.create_time, b.views, b.words, b.read_time, b.password, c.category_name
+        select 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.description AS b_description, 
+            b.is_top AS b_is_top, 
+            b.create_time AS b_create_time, 
+            b.views AS b_views, 
+            b.words AS b_words, 
+            b.read_time AS b_read_time, 
+            b.password AS b_password, 
+            c.category_name AS c_category_name
         from category as c left join blog as b on b.category_id=c.id
         where c.category_name=#{categoryName} and b.is_published=true
+        order by b.is_top desc, b.create_time desc
     </select>
 
     <!--根据标签name查询公开博客List-->
     <select id="getBlogInfoListByTagNameAndIsPublished" resultMap="blogInfo">
-        select b.id, b.title, b.description, b.is_top, b.create_time, b.views, b.words, b.read_time, b.password, c.category_name
-        from (((tag as t left join blog_tag as bt on t.id=bt.tag_id) left join blog as b on bt.blog_id=b.id) left join category as c on b.category_id=c.id)
+        select 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.description AS b_description, 
+            b.is_top AS b_is_top, 
+            b.create_time AS b_create_time, 
+            b.views AS b_views, 
+            b.words AS b_words, 
+            b.read_time AS b_read_time, 
+            b.password AS b_password, 
+            c.category_name AS c_category_name
+        from tag t 
+        left join blog_tag bt on t.id=bt.tag_id 
+        left join blog b on bt.blog_id=b.id 
+        left join category c on b.category_id=c.id
         where t.tag_name=#{tagName} and b.is_published=true
+        order by b.is_top desc, b.create_time desc
     </select>
 
     <!--查询公开博客年月List-->
@@ -258,11 +337,24 @@
 
     <!--按id查询博客-->
     <select id="getBlogById" resultMap="blog">
-        select b.id, b.title, b.first_picture, b.content, b.description, b.is_recommend, b.is_published, b.is_appreciation,
-        b.is_comment_enabled, b.is_top, b.create_time, b.update_time, b.views, b.words, b.read_time, b.password,
-        c.id as category_id, c.category_name,
-        bt.tag_id as tag_id, t.tag_name as tag_name, t.color
-        from (((blog as b left join category as c on b.category_id=c.id) left join blog_tag as bt on b.id=bt.blog_id) left join tag as t on bt.tag_id=t.id)
+        select
+            b.id as b_id, b.title as b_title, b.first_picture as b_first_picture, b.content as b_content, b.description as b_description,
+            b.is_published as b_is_published, b.is_recommend as b_is_recommend, b.is_appreciation as b_is_appreciation,
+            b.is_comment_enabled as b_is_comment_enabled, b.is_top as b_is_top,
+            b.create_time as b_create_time, b.update_time as b_update_time, b.views as b_views,
+            b.words as b_words, b.read_time as b_read_time, b.password as b_password,
+            
+            c.id as c_id, c.category_name as c_category_name,
+            
+            u.id as u_id, u.username as u_username, u.nickname as u_nickname, u.avatar as u_avatar,
+            u.email as u_email, u.role as u_role, u.create_time as u_create_time, u.update_time as u_update_time,
+            
+            t.id as t_id, t.tag_name as t_tag_name, t.color as t_color
+        from blog b
+        left join category c on b.category_id = c.id
+        left join user u on b.user_id = u.id
+        left join blog_tag bt on b.id = bt.blog_id
+        left join tag t on bt.tag_id = t.id
         where b.id=#{id}
     </select>
 
@@ -359,13 +451,24 @@
 
     <!--根据用户ID获取博客列表-->
     <select id="getBlogListByUserId" resultMap="blog">
-        select b.id, b.title, b.first_picture, b.create_time, b.update_time, b.is_published, b.is_recommend, b.is_appreciation,
-        b.is_comment_enabled, b.is_top, b.password,
-        c.id as category_id, c.category_name
-        from blog as b left join category as c on b.category_id=c.id
+        select 
+            b.id AS b_id, 
+            b.title AS b_title, 
+            b.first_picture AS b_first_picture, 
+            b.create_time AS b_create_time, 
+            b.update_time AS b_update_time, 
+            b.is_published AS b_is_published, 
+            b.is_recommend AS b_is_recommend, 
+            b.is_appreciation AS b_is_appreciation,
+            b.is_comment_enabled AS b_is_comment_enabled, 
+            b.is_top AS b_is_top, 
+            b.password AS b_password,
+            c.id AS c_id, 
+            c.category_name AS c_category_name
+        from blog as b 
+        left join category as c on b.category_id=c.id
         where b.user_id=#{userId}
         order by b.create_time desc
-        limit #{start}, #{size}
     </select>
     
     <!--根据用户ID统计博客数量-->
@@ -373,8 +476,74 @@
         select count(*) from blog where user_id=#{userId}
     </select>
 
+    <!--根据标题、分类ID和用户ID过滤博客列表-->
+    <select id="getBlogListByTitleAndCategoryIdAndUserId" resultMap="blog">
+        select
+            b.id as b_id, b.title as b_title, b.first_picture as b_first_picture,
+            b.content as b_content, b.description as b_description,
+            b.is_published as b_is_published, b.is_recommend as b_is_recommend,
+            b.is_appreciation as b_is_appreciation, b.is_comment_enabled as b_is_comment_enabled,
+            b.is_top as b_is_top, b.create_time as b_create_time, b.update_time as b_update_time,
+            b.views as b_views, b.words as b_words, b.read_time as b_read_time, b.password as b_password,
+
+            c.id as c_id, c.category_name as c_category_name,
+
+            u.id as u_id, u.username as u_username, u.nickname as u_nickname,
+            u.avatar as u_avatar, u.email as u_email, u.role as u_role,
+            u.create_time AS u_create_time, u.update_time AS u_update_time
+        from blog as b
+        left join category as c on b.category_id=c.id
+        left join user as u on b.user_id=u.id
+        <where>
+            <if test="userId != null">
+                AND b.user_id=#{userId}
+            </if>
+            <if test="title != null and title != ''">
+                AND b.title like concat('%', #{title}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND b.category_id=#{categoryId}
+            </if>
+        </where>
+        order by b.create_time desc
+    </select>
+    
+    <!--根据标题、分类ID和用户ID统计博客数量-->
+    <select id="countBlogByTitleAndCategoryIdAndUserId" resultType="java.lang.Integer">
+        select count(*) 
+        from blog as b
+        <where>
+            <if test="userId != null">
+                AND b.user_id=#{userId}
+            </if>
+            <if test="title != null and title != ''">
+                AND b.title like concat('%', #{title}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND b.category_id=#{categoryId}
+            </if>
+        </where>
+    </select>
+
     <!-- 根据用户ID统计其所有博客的总浏览量 -->
     <select id="sumViewsByUserId" resultType="java.lang.Integer">
         SELECT COALESCE(SUM(views), 0) FROM blog WHERE user_id = #{userId}
+    </select>
+
+    <select id="getBlogIdAndTitleList" resultType="java.lang.Long">
+        SELECT b.id
+        FROM blog b
+    </select>
+
+    <select id="findBlogIdAndTitleListByUserId" resultType="java.util.Map">
+        SELECT
+            b.id AS id,
+            b.title AS title
+        FROM
+            blog b
+        WHERE
+            b.user_id = #{userId}
+        ORDER BY
+            b.create_time DESC
     </select>
 </mapper>

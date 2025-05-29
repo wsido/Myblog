@@ -2,7 +2,7 @@ import axios from '@/util/request'
 
 export function getVisitLogList(queryInfo) {
 	return axios({
-		url: 'visitLogs',
+		url: 'admin/visitLogs',
 		method: 'GET',
 		params: {
 			...queryInfo
@@ -12,7 +12,7 @@ export function getVisitLogList(queryInfo) {
 
 export function deleteVisitLogById(id) {
 	return axios({
-		url: 'visitLog',
+		url: 'admin/visitLog',
 		method: 'DELETE',
 		params: {
 			id

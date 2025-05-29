@@ -2,7 +2,7 @@ import request from '@/util/request'
 
 export function login(data) {
 	return request({
-		url: 'login',
+		url: 'admin/login',
 		method: 'post',
 		data
 	})
@@ -10,7 +10,7 @@ export function login(data) {
 
 export function getInfo() {
 	return request({
-		url: 'user', // Assumes backend exposes GET /admin/user for current user info
+		url: '/user/info', // Corrected to point to the actual backend endpoint
 		method: 'get'
 	})
 }

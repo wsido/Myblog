@@ -43,7 +43,7 @@ public class IndexController {
 		Map<String, Object> map = siteSettingService.getSiteInfo();
 		List<NewBlog> newBlogList = blogService.getNewBlogListByIsPublished();
 		List<Category> categoryList = categoryService.getCategoryNameList();
-		List<Tag> tagList = tagService.getTagListNotId();
+		List<Tag> tagList = tagService.getTagList();
 		List<RandomBlog> randomBlogList = blogService.getRandomBlogListByLimitNumAndIsPublishedAndIsRecommend();
 		map.put("newBlogList", newBlogList);
 		map.put("categoryList", categoryList);

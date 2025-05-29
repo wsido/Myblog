@@ -26,7 +26,6 @@ public class Comment {
 	private String content;//评论内容
 	private String avatar;//头像(图片路径)
 	private Date createTime;//评论时间
-	private String website;//个人网站
 	private String ip;//评论者ip地址
 	private Boolean published;//公开或回收站
 	private Boolean adminComment;//博主回复
@@ -34,6 +33,7 @@ public class Comment {
 	private Boolean notice;//接收邮件提醒
 	private Long parentCommentId;//父评论id
 	private String qq;//如果评论昵称为QQ号，则将昵称和头像置为QQ昵称和QQ头像，并将此字段置为QQ号备份
+	private Long userId;
 
 	private BlogIdAndTitle blog;//所属的文章
 	private List<Comment> replyComments = new ArrayList<>();//回复该评论的评论

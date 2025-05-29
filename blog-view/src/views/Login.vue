@@ -7,12 +7,6 @@
 			</div>
 			<!--登录表单-->
 			<el-form ref="loginFormRef" :model="loginForm" :rules="loginFormRules" class="login_form">
-				<el-form-item>
-					<el-radio-group v-model="loginType">
-						<el-radio :label="1">普通用户</el-radio>
-						<el-radio :label="2">管理员</el-radio>
-					</el-radio-group>
-				</el-form-item>
 				<el-form-item prop="username">
 					<el-input v-model="loginForm.username" prefix-icon="el-icon-user-solid" placeholder="用户名"></el-input>
 				</el-form-item>
@@ -23,7 +17,7 @@
 					<el-button type="primary" @click="login">登录</el-button>
 					<el-button type="info" @click="resetLoginForm">重置</el-button>
 				</el-form-item>
-				<el-form-item v-if="loginType === 1" class="register-link">
+				<el-form-item class="register-link">
 					<router-link to="/register">没有账号？立即注册</router-link>
 				</el-form-item>
 			</el-form>
@@ -61,35 +55,30 @@ import { userLogin } from "@/api/user";
 			login() {
 				this.$refs.loginFormRef.validate(valid => {
 					if (valid) {
-						// 根据登录类型选择不同的API
-						const loginAction = this.loginType === 1 ? userLogin : login;
-						const tokenKey = this.loginType === 1 ? 'userToken' : 'adminToken';
-						
-						loginAction(this.loginForm).then(res => {
-							if (res.code === 200) {
-								this.msgSuccess(res.msg)
-								window.localStorage.setItem(tokenKey, res.data.token)
-								
-								// 跳转到不同的页面
-								if (this.loginType === 1) {
-									// 普通用户跳转到首页
-									this.$router.push('/home')
-									// 添加延迟，确保token已存储，页面刷新获取最新状态
-									setTimeout(() => {
-										window.location.reload()
-									}, 500)
-								} else {
-									// 管理员跳转到后台
-									window.open('/admin', '_blank')
-								}
-							} else {
-								this.msgError(res.msg)
-							}
-						}).catch(() => {
-							this.msgError("请求失败")
-						})
+						if (this.loginType === 1) { // 普通用户登录
+							this.$store.dispatch('login', this.loginForm).then(() => {
+								// 登录成功且用户信息已存入Vuex (由action处理)
+								this.$router.push('/home');
+							}).catch(() => {
+								// 登录失败或获取用户信息失败 (错误消息已在action中弹出)
+							});
+						} 
+						// else { // 管理员登录逻辑不再需要，因为UI选项已移除
+						// 	const adminLoginAPI = login; // login from "@/api/login"
+						// 	adminLoginAPI(this.loginForm).then(res => {
+						// 		if (res.code === 200 && res.data && res.data.token) {
+						// 			this.msgSuccess(res.msg || '管理员登录成功');
+						// 			window.localStorage.setItem('adminToken', res.data.token);
+						// 			window.open('/admin', '_blank'); // 管理员跳转到后台
+						// 		} else {
+						// 			this.msgError(res.msg || '管理员登录失败');
+						// 		}
+						// 	}).catch(() => {
+						// 		this.msgError("管理员登录请求失败");
+						// 	});
+						// }
 					}
-				})
+				});
 			}
 		}
 	}

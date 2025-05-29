@@ -2,7 +2,7 @@ import axios from '@/util/request'
 
 export function getFriendsByQuery(queryInfo) {
 	return axios({
-		url: 'friends',
+		url: '/admin/friends',
 		method: 'GET',
 		params: {
 			...queryInfo
@@ -12,7 +12,7 @@ export function getFriendsByQuery(queryInfo) {
 
 export function updatePublished(id, published) {
 	return axios({
-		url: 'friend/published',
+		url: '/admin/friend/published',
 		method: 'PUT',
 		params: {
 			id,
@@ -23,7 +23,7 @@ export function updatePublished(id, published) {
 
 export function saveFriend(form) {
 	return axios({
-		url: 'friend',
+		url: '/admin/friend',
 		method: 'POST',
 		data: {
 			...form
@@ -33,7 +33,7 @@ export function saveFriend(form) {
 
 export function updateFriend(form) {
 	return axios({
-		url: 'friend',
+		url: '/admin/friend',
 		method: 'PUT',
 		data: {
 			...form
@@ -43,7 +43,7 @@ export function updateFriend(form) {
 
 export function deleteFriendById(id) {
 	return axios({
-		url: 'friend',
+		url: '/admin/friend',
 		method: 'DELETE',
 		params: {
 			id
@@ -53,14 +53,14 @@ export function deleteFriendById(id) {
 
 export function getFriendInfo() {
 	return axios({
-		url: 'friendInfo',
+		url: '/admin/friendInfo',
 		method: 'GET'
 	})
 }
 
 export function updateCommentEnabled(commentEnabled) {
 	return axios({
-		url: 'friendInfo/commentEnabled',
+		url: '/admin/friendInfo/commentEnabled',
 		method: 'PUT',
 		params: {
 			commentEnabled
@@ -70,7 +70,7 @@ export function updateCommentEnabled(commentEnabled) {
 
 export function updateContent(content) {
 	return axios({
-		url: 'friendInfo/content',
+		url: '/admin/friendInfo/content',
 		method: 'PUT',
 		data: {
 			content

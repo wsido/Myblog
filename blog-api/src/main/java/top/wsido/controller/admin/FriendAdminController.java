@@ -3,20 +3,13 @@ package top.wsido.controller.admin;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import top.wsido.annotation.OperationLogger;
-import top.wsido.entity.Friend;
+import top.wsido.model.vo.FriendInfo;
 import top.wsido.model.vo.Result;
 import top.wsido.service.FriendService;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * @Description: 友链页面后台管理
@@ -27,7 +20,7 @@ import java.util.Map;
 @RequestMapping("/admin")
 public class FriendAdminController {
 	@Autowired
-	FriendService friendService;
+	private FriendService friendService;
 
 	/**
 	 * 分页获取友链列表
@@ -37,12 +30,12 @@ public class FriendAdminController {
 	 * @return
 	 */
 	@GetMapping("/friends")
-	public Result friends(@RequestParam(defaultValue = "1") Integer pageNum,
-	                      @RequestParam(defaultValue = "10") Integer pageSize) {
-		String orderBy = "create_time asc";
-		PageHelper.startPage(pageNum, pageSize, orderBy);
-		PageInfo<Friend> pageInfo = new PageInfo<>(friendService.getFriendList());
-		return Result.ok("请求成功", pageInfo);
+	public Result getFriendList(@RequestParam(defaultValue = "1") Integer pageNum,
+	                            @RequestParam(defaultValue = "10") Integer pageSize) {
+		PageHelper.startPage(pageNum, pageSize);
+		List<top.wsido.entity.Friend> friendList = friendService.getFriendList();
+		PageInfo<top.wsido.entity.Friend> pageInfo = new PageInfo<>(friendList);
+		return Result.ok("获取成功", pageInfo);
 	}
 
 	/**
@@ -56,33 +49,42 @@ public class FriendAdminController {
 	@PutMapping("/friend/published")
 	public Result updatePublished(@RequestParam Long id, @RequestParam Boolean published) {
 		friendService.updateFriendPublishedById(id, published);
-		return Result.ok("操作成功");
+		return Result.ok("更新成功");
 	}
 
 	/**
 	 * 添加友链
 	 *
-	 * @param friend 友链DTO
+	 * @param friendDto 友链DTO
 	 * @return
 	 */
-	@OperationLogger("添加友链")
+	@OperationLogger("保存友链")
 	@PostMapping("/friend")
-	public Result saveFriend(@RequestBody Friend friend) {
-		friendService.saveFriend(friend);
-		return Result.ok("添加成功");
+	public Result saveFriend(@RequestBody top.wsido.model.dto.Friend friendDto) {
+		top.wsido.entity.Friend friendEntity = new top.wsido.entity.Friend();
+		friendEntity.setNickname(friendDto.getNickname());
+		friendEntity.setDescription(friendDto.getDescription());
+		friendEntity.setWebsite(friendDto.getWebsite());
+		friendEntity.setAvatar(friendDto.getAvatar());
+		friendEntity.setPublished(friendDto.getPublished());
+		friendService.saveFriend(friendEntity);
+		return Result.ok("保存成功");
 	}
 
 	/**
 	 * 更新友链
 	 *
-	 * @param friend 友链DTO
+	 * @param friendDto 友链DTO
 	 * @return
 	 */
 	@OperationLogger("更新友链")
 	@PutMapping("/friend")
-	public Result updateFriend(@RequestBody top.wsido.model.dto.Friend friend) {
-		friendService.updateFriend(friend);
-		return Result.ok("修改成功");
+	public Result updateFriend(@RequestBody top.wsido.model.dto.Friend friendDto) {
+		if (friendDto.getId() == null) {
+			return Result.error("友链ID不能为空");
+		}
+		friendService.updateFriend(friendDto);
+		return Result.ok("更新成功");
 	}
 
 	/**
@@ -104,8 +106,9 @@ public class FriendAdminController {
 	 * @return
 	 */
 	@GetMapping("/friendInfo")
-	public Result friendInfo() {
-		return Result.ok("请求成功", friendService.getFriendInfo(false, false));
+	public Result getFriendInfoDetail() {
+		FriendInfo friendInfo = friendService.getFriendInfo(false, false);
+		return Result.ok("获取成功", friendInfo);
 	}
 
 	/**
@@ -114,23 +117,23 @@ public class FriendAdminController {
 	 * @param commentEnabled 是否开放评论
 	 * @return
 	 */
-	@OperationLogger("修改友链页面评论开放状态")
+	@OperationLogger("更新友链页面评论状态")
 	@PutMapping("/friendInfo/commentEnabled")
-	public Result updateFriendInfoCommentEnabled(@RequestParam Boolean commentEnabled) {
+	public Result updateFriendCommentEnabled(@RequestParam Boolean commentEnabled) {
 		friendService.updateFriendInfoCommentEnabled(commentEnabled);
-		return Result.ok("修改成功");
+		return Result.ok("更新成功");
 	}
 
 	/**
 	 * 修改友链页面content
 	 *
-	 * @param map 包含content的JSON对象
+	 * @param friendInfo 包含content的FriendInfo对象
 	 * @return
 	 */
-	@OperationLogger("修改友链页面信息")
+	@OperationLogger("更新友链页面内容")
 	@PutMapping("/friendInfo/content")
-	public Result updateFriendInfoContent(@RequestBody Map map) {
-		friendService.updateFriendInfoContent((String) map.get("content"));
-		return Result.ok("修改成功");
+	public Result updateFriendContent(@RequestBody FriendInfo friendInfo) {
+		friendService.updateFriendInfoContent(friendInfo.getContent());
+		return Result.ok("更新成功");
 	}
 }

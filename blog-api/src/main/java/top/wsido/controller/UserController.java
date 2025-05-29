@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -79,6 +80,25 @@ public class UserController {
     }
     
     /**
+     * 修改账号和密码
+     *
+     * @param user 用户信息（包含用户名和密码）
+     * @param jwt JWT令牌
+     * @return 修改结果
+     */
+    @PostMapping("/account")
+    public Result account(@RequestBody User user, @RequestHeader(value = "Authorization", defaultValue = "") String jwt) {
+        System.out.println("UserController.account(): 收到请求");
+        System.out.println("UserController.account(): user = " + user);
+        System.out.println("UserController.account(): jwt = " + jwt);
+        
+        boolean res = userService.changeAccount(user, jwt);
+        System.out.println("UserController.account(): 修改结果 = " + res);
+        
+        return res ? Result.ok("修改成功") : Result.error("修改失败");
+    }
+    
+    /**
      * 用户头像上传
      *
      * @param file 图片文件
@@ -131,5 +151,16 @@ public class UserController {
             e.printStackTrace();
             return Result.error("文件上传失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 测试接口 - 无需验证
+     *
+     * @return 简单测试结果
+     */
+    @GetMapping("/test")
+    public Result test() {
+        System.out.println("UserController.test(): 测试接口被调用");
+        return Result.ok("测试成功，接口正常");
     }
 } 

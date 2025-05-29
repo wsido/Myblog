@@ -1,0 +1,30 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# NBlog项目概述
+
+NBlog是一个完整的博客系统，由三个主要部分组成：
+
+1. **后端API (blog-api)**: 基于Java的RESTful API服务
+   - 主要技术：Spring Boot
+   - 入口文件：[src/main/java/top/wsido/NBlogApplication.java](mdc:src/main/java/top/wsido/NBlogApplication.java)
+
+2. **内容管理系统 (blog-cms)**: 博客管理员界面
+   - 主要技术：Vue.js
+   - 入口文件：[blog-cms/src/main.js](mdc:blog-cms/src/main.js)
+
+3. **前端博客 (blog-view)**: 面向读者的博客展示界面
+   - 主要技术：Vue.js
+   - 入口文件：[blog-view/src/main.js](mdc:blog-view/src/main.js)
+
+## 项目架构
+
+```
+NBlog
+├── blog-api/     # 后端API服务
+├── blog-cms/     # 内容管理系统(管理员界面)
+└── blog-view/    # 前端博客(读者界面)
+```
+

@@ -32,3 +32,40 @@ export function getSearchBlogList(query) {
 		}
 	})
 }
+
+// 添加收藏相关的 API 函数
+export function checkFavorite(blogId) {
+	const token = window.localStorage.getItem('userToken'); // 或者从 Vuex store 获取
+	return axios({
+		url: `/user/favorites/check/${blogId}`,
+		method: 'GET',
+		headers: {
+			Authorization: token,
+		},
+	});
+}
+
+export function addFavorite(blogId) {
+	const token = window.localStorage.getItem('userToken');
+	return axios({
+		url: '/user/favorites',
+		method: 'POST',
+		headers: {
+			Authorization: token,
+		},
+		data: {
+			blogId,
+		},
+	});
+}
+
+export function removeFavorite(blogId) {
+	const token = window.localStorage.getItem('userToken');
+	return axios({
+		url: `/user/favorites/${blogId}`,
+		method: 'DELETE',
+		headers: {
+			Authorization: token,
+		},
+	});
+}

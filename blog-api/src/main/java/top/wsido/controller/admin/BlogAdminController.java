@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +32,10 @@ import top.wsido.service.BlogService;
 import top.wsido.service.CategoryService;
 import top.wsido.service.CommentService;
 import top.wsido.service.TagService;
+import top.wsido.util.SecurityUtils;
 import top.wsido.util.StringUtils;
+import top.wsido.entity.User;
+import top.wsido.exception.PersistenceException;
 
 /**
  * @Description: 博客文章后台管理
@@ -40,14 +45,18 @@ import top.wsido.util.StringUtils;
 @RestController
 @RequestMapping("/admin")
 public class BlogAdminController {
+	private static final Logger logger = LoggerFactory.getLogger(BlogAdminController.class);
+
 	@Autowired
-	BlogService blogService;
+	private BlogService blogService;
 	@Autowired
-	CategoryService categoryService;
+	private CategoryService categoryService;
 	@Autowired
-	TagService tagService;
+	private TagService tagService;
 	@Autowired
-	CommentService commentService;
+	private CommentService commentService;
+	@Autowired
+	private SecurityUtils securityUtils;
 
 	/**
 	 * 获取博客文章列表
@@ -95,8 +104,34 @@ public class BlogAdminController {
 	 */
 	@GetMapping("/categoryAndTag")
 	public Result categoryAndTag() {
+		User currentUser = securityUtils.getCurrentUser();
+		logger.info("[BlogAdminController.categoryAndTag] Current user from SecurityUtils: Username: {}, Type: {}", 
+		            (currentUser != null ? currentUser.getUsername() : "null"), 
+		            (currentUser != null ? currentUser.getType() : "null"));
+
 		List<Category> categories = categoryService.getCategoryList();
 		List<Tag> tags = tagService.getTagList();
+
+		// 添加日志开始
+		logger.info("[BlogAdminController.categoryAndTag] Fetched categories size: {}", (categories != null ? categories.size() : "null"));
+		if (categories != null && !categories.isEmpty()) {
+		    for (Category cat : categories) {
+		        logger.info("[BlogAdminController.categoryAndTag] Category: ID={}, Name={}", cat.getId(), cat.getName());
+		    }
+		} else {
+		    logger.info("[BlogAdminController.categoryAndTag] Categories list is null or empty.");
+		}
+
+		logger.info("[BlogAdminController.categoryAndTag] Fetched tags size: {}", (tags != null ? tags.size() : "null"));
+		if (tags != null && !tags.isEmpty()) {
+		    for (Tag tag : tags) {
+		        logger.info("[BlogAdminController.categoryAndTag] Tag: ID={}, Name={}, Color={}", tag.getId(), tag.getName(), tag.getColor());
+		    }
+		} else {
+		    logger.info("[BlogAdminController.categoryAndTag] Tags list is null or empty.");
+		}
+		// 添加日志结束
+
 		Map<String, Object> map = new HashMap<>(4);
 		map.put("categories", categories);
 		map.put("tags", tags);
@@ -151,9 +186,12 @@ public class BlogAdminController {
 	 * @param id 博客id
 	 * @return
 	 */
-	@GetMapping("/blog")
-	public Result getBlog(@RequestParam Long id) {
+	@GetMapping("/blog/{id}")
+	public Result getBlog(@PathVariable Long id) {
 		Blog blog = blogService.getBlogById(id);
+		if (blog == null) {
+			return Result.error("博客不存在");
+		}
 		return Result.ok("获取成功", blog);
 	}
 
@@ -202,71 +240,99 @@ public class BlogAdminController {
 		}
 		if (cate instanceof Integer) {//选择了已存在的分类
 			Category c = categoryService.getCategoryById(((Integer) cate).longValue());
+			if (c == null) {
+			    return Result.error("选择的分类不存在: " + cate);
+            }
 			blog.setCategory(c);
+			blog.setCategoryId(c.getId().intValue());
 		} else if (cate instanceof String) {//添加新分类
-			//查询分类是否已存在
-			Category category = categoryService.getCategoryByName((String) cate);
+		    String categoryName = (String) cate;
+		    if (StringUtils.isEmpty(categoryName)) {
+		        return Result.error("分类名不能为空");
+            }
+			Category category = categoryService.getCategoryByName(categoryName);
 			if (category != null) {
-				return Result.error("不可添加已存在的分类");
+				blog.setCategory(category);
+				blog.setCategoryId(category.getId().intValue());
+			} else {
+			    Category c = new Category();
+			    c.setName(categoryName);
+			    categoryService.saveCategory(c);
+                if (c.getId() == null) {
+                    throw new top.wsido.exception.PersistenceException("保存新分类后未能获取ID: " + categoryName);
+                }
+			    blog.setCategory(c);
+			    blog.setCategoryId(c.getId().intValue());
 			}
-			Category c = new Category();
-			c.setName((String) cate);
-			categoryService.saveCategory(c);
-			blog.setCategory(c);
 		} else {
-			return Result.error("分类不正确");
+		    logger.warn("getResult: cate field contains unexpected type: {}", cate != null ? cate.getClass().getName() : "null");
+			return Result.error("分类数据不正确");
 		}
 
 		//处理标签
-		List<Object> tagList = blog.getTagList();
-		List<Tag> tags = new ArrayList<>();
-		for (Object t : tagList) {
-			if (t instanceof Integer) {//选择了已存在的标签
-				Tag tag = tagService.getTagById(((Integer) t).longValue());
-				tags.add(tag);
-			} else if (t instanceof String) {//添加新标签
-				//查询标签是否已存在
-				Tag tag1 = tagService.getTagByName((String) t);
-				if (tag1 != null) {
-					return Result.error("不可添加已存在的标签");
+		List<Object> tagListInput = blog.getTagList(); // 从 DTO 获取前端传来的 tagList
+		List<Tag> resolvedTags = new ArrayList<>(); // 用于存放处理后的 Tag 对象
+		List<Integer> resolvedTagIds = new ArrayList<>(); // 用于存放处理后的 Tag ID
+
+		if (tagListInput != null && !tagListInput.isEmpty()) {
+			for (Object t : tagListInput) {
+				if (t instanceof Integer) { //选择了已存在的标签
+					Tag tag = tagService.getTagById(((Integer) t).longValue());
+					if (tag == null) {
+						return Result.error("选择的标签ID不存在: " + t);
+					}
+					resolvedTags.add(tag);
+					resolvedTagIds.add(tag.getId().intValue());
+				} else if (t instanceof String) { //添加新标签
+					String tagName = (String) t;
+                    if (StringUtils.isEmpty(tagName)) {
+                        return Result.error("标签名不能为空");
+                    }
+					Tag existingTag = tagService.getTagByName(tagName);
+					if (existingTag != null) {
+						// 如果希望使用已存在的同名标签
+						resolvedTags.add(existingTag);
+						resolvedTagIds.add(existingTag.getId().intValue());
+					} else {
+						Tag newTag = new Tag();
+						newTag.setName(tagName);
+						tagService.saveTag(newTag); 
+						if (newTag.getId() == null) {
+							throw new top.wsido.exception.PersistenceException("保存新标签后未能获取ID: " + tagName);
+						}
+						resolvedTags.add(newTag);
+						resolvedTagIds.add(newTag.getId().intValue());
+					}
+				} else {
+				    logger.warn("getResult: tagListInput contains unexpected type: {}", t != null ? t.getClass().getName() : "null");
+					return Result.error("标签数据不正确，包含无法处理的类型");
 				}
-				Tag tag = new Tag();
-				tag.setName((String) t);
-				tagService.saveTag(tag);
-				tags.add(tag);
-			} else {
-				return Result.error("标签不正确");
 			}
 		}
+		
+		blog.setTags(resolvedTags); 
+		blog.setTagIds(resolvedTagIds);
 
 		Date date = new Date();
 		if (blog.getReadTime() == null || blog.getReadTime() < 0) {
-			blog.setReadTime((int) Math.round(blog.getWords() / 200.0));//粗略计算阅读时长
+			if (blog.getWords() != null && blog.getWords() > 0) {
+			    blog.setReadTime((int) Math.round(blog.getWords() / 200.0));
+			} else {
+			    blog.setReadTime(0); // Default read time if words is null or not positive
+			}
 		}
 		if (blog.getViews() == null || blog.getViews() < 0) {
 			blog.setViews(0);
 		}
+
 		if ("save".equals(type)) {
 			blog.setCreateTime(date);
 			blog.setUpdateTime(date);
-			// User user = new User(); // REMOVED
-			// user.setId(1L); // REMOVED
-			// blog.setUser(user); // REMOVED - User will be set in BlogServiceImpl
-
-			blogService.saveBlog(blog);
-			//关联博客和标签(维护 blog_tag 表)
-			for (Tag t : tags) {
-				blogService.saveBlogTag(blog.getId(), t.getId());
-			}
+			blogService.saveBlog(blog); 
 			return Result.ok("添加成功");
 		} else {
 			blog.setUpdateTime(date);
-			blogService.updateBlog(blog);
-			//关联博客和标签(维护 blog_tag 表)
-			blogService.deleteBlogTagByBlogId(blog.getId());
-			for (Tag t : tags) {
-				blogService.saveBlogTag(blog.getId(), t.getId());
-			}
+			blogService.updateBlog(blog); 
 			return Result.ok("更新成功");
 		}
 	}

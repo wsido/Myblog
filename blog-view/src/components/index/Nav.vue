@@ -142,7 +142,13 @@ import { mapState } from 'vuex';
 				this.mobileHide = !this.mobileHide
 			},
 			categoryRoute(name) {
-				this.$router.push(`/category/${name}`)
+				const targetPath = `/category/${name}`;
+				if (this.$route.fullPath !== targetPath) {
+					this.$router.push(targetPath);
+				} else {
+					// 可选：如果希望在尝试导航到同一页面时有反馈，可以取消注释下一行
+					// console.warn('Navigation to current location was prevented:', targetPath);
+				}
 			},
 			debounceQuery(queryString, callback) {
 				this.timer && clearTimeout(this.timer)

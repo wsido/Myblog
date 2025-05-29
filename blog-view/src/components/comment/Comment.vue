@@ -118,8 +118,17 @@
 	}
 
 	.ui.comments .comment .avatar {
-		width: 40px !important;
+		width: 35px !important;
+		height: 35px !important;
 		margin: 0;
+		transform: none !important;
+		transition: none !important;
+		animation: none !important;
+	}
+
+	.ui.comments .comment .avatar:hover {
+		transform: none !important;
+		animation: none !important;
 	}
 
 	.ui.comments .comment .text {

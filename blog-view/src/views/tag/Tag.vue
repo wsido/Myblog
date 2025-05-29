@@ -33,11 +33,14 @@
 		},
 		computed: {
 			tagName() {
-				return this.$route.params.name
+				const name = this.$route.params.name;
+				console.log('Tag.vue - Current tagName from route params:', name);
+				return name;
 			}
 		},
 		methods: {
-			getBlogList(pageNum) {
+			getBlogList(pageNum = 1) {
+				console.log(`Tag.vue - Fetching blogs for tag: '${this.tagName}', page: ${pageNum}`);
 				getBlogListByTagName(this.tagName, pageNum).then(res => {
 					if (res.code === 200) {
 						this.blogList = res.data.list

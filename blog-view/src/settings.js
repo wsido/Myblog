@@ -1,11 +1,14 @@
-module.exports = {
+// import defaultSettings from './defaultSettings'
+// const {showSettings, tagsView, fixedHeader, sidebarLogo} = defaultSettings
+
+const settings = {
 	/**
 	 * @type {string}
 	 * @description 首页三张背景图
 	 */
-	bg1: '/img/bg1.jpg',
-	bg2: '/img/bg2.jpg',
-	bg3: '/img/bg3.jpg',
+	bg1: '/img/bj1.jpg',
+	bg2: '/img/bj2.jpg',
+	bg3: '/img/bj3.jpg',
 
 	/**
 	 * @type {string}
@@ -13,3 +16,5 @@ module.exports = {
 	 */
 	malfunctionText: 'wsido\'s Blog'
 }
+
+module.exports = settings

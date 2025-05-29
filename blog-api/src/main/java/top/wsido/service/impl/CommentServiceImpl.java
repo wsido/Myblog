@@ -59,6 +59,30 @@ public class CommentServiceImpl implements CommentService {
 		return comment;
 	}
 
+	@Override
+	public List<Comment> getListByNickname(String nickname) {
+		return commentMapper.getListByNickname(nickname);
+	}
+
+	@Override
+	public List<Comment> getListByNicknameAndPageAndBlogId(String nickname, Integer page, Long blogId) {
+		// 这里直接调用mapper层对应的方法，Mapper层将负责处理page和blogId为null的情况
+		// Mapper的XML中可以使用<if test="page != null">等条件来动态构建SQL
+		List<Comment> comments = commentMapper.getListByNicknameAndPageAndBlogId(nickname, page, blogId);
+		// 子评论的递归获取逻辑可以保持，或者根据实际需求调整（例如，如果按博客筛选，子评论也应属于同一博客）
+		// 为简化，此处暂时不对子评论获取逻辑做复杂修改，假设Mapper返回的已经是顶层评论
+		// 如果需要递归加载符合条件的子评论，这里的逻辑需要像getListByPageAndParentCommentId一样处理
+		for (Comment c : comments) {
+			// 考虑到UserCommentController只获取当前用户的评论，这里递归获取子评论时，
+			// 仍然使用原有的getListByPageAndParentCommentId，因为它不按用户筛选，而是按父评论ID和页面筛选
+			// 这意味着子评论可能不是当前用户发表的，但属于同一页面和父评论下
+			// 如果业务要求"我的评论"下的子评论也必须是"我的"，则此处逻辑需要调整
+			List<Comment> replyComments = getListByPageAndParentCommentId(c.getPage(), c.getBlog() != null ? c.getBlog().getId() : null, c.getId());
+			c.setReplyComments(replyComments);
+		}
+		return comments;
+	}
+
 	/**
 	 * 将所有子评论递归取出到一个List中
 	 *
@@ -181,6 +205,20 @@ public class CommentServiceImpl implements CommentService {
 		List<Comment> comments = commentMapper.getListByParentCommentId(parentCommentId);
 		for (Comment c : comments) {
 			List<Comment> replyComments = getAllReplyComments(c.getId());
+			c.setReplyComments(replyComments);
+		}
+		return comments;
+	}
+
+	@Override
+	public List<Comment> getAdminTopLevelCommentList(Integer page, Long blogId, Long parentCommentId) {
+		List<Comment> comments = commentMapper.getAdminTopLevelComments(page, blogId, parentCommentId);
+		for (Comment c : comments) {
+			// Recursively fetch replies. For admin view, we want full Comment objects for replies too.
+			// We can use the existing getListByPageAndParentCommentId as it fetches full Comment objects
+			// and its recursive nature is suitable here. We pass the page/blogId of the parent if available,
+			// or null if the parent itself was fetched with null page/blogId (global admin view).
+			List<Comment> replyComments = getListByPageAndParentCommentId(c.getPage(), (c.getBlog() != null ? c.getBlog().getId() : null), c.getId());
 			c.setReplyComments(replyComments);
 		}
 		return comments;

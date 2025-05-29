@@ -222,11 +222,27 @@ import echarts from 'echarts';
 					this.initVisitRecordEcharts(res.data.visitRecord)
 				})
 			},
-			initCategoryEcharts(category) {
+			initCategoryEcharts(categoryData) {
+				if (categoryData && categoryData.legend && categoryData.series) {
+					this.categoryOption.legend.data = categoryData.legend;
+					this.categoryOption.series[0].data = categoryData.series;
+				} else {
+					this.categoryOption.legend.data = [];
+					this.categoryOption.series[0].data = [];
+					console.warn("Category data for ECharts is missing or in an unexpected format:", categoryData);
+				}
 				this.categoryEcharts = echarts.init(this.$refs.categoryEcharts, 'light')
 				this.categoryEcharts.setOption(this.categoryOption)
 			},
-			initTagEcharts(tag) {
+			initTagEcharts(tagData) {
+				if (tagData && tagData.legend && tagData.series) {
+					this.tagOption.legend.data = tagData.legend;
+					this.tagOption.series[0].data = tagData.series;
+				} else {
+					this.tagOption.legend.data = [];
+					this.tagOption.series[0].data = [];
+					console.warn("Tag data for ECharts is missing or in an unexpected format:", tagData);
+				}
 				this.tagEcharts = echarts.init(this.$refs.tagEcharts, 'light')
 				this.tagEcharts.setOption(this.tagOption)
 			},

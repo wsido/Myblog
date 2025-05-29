@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# CMS管理系统结构
+
+`blog-cms`是博客的管理系统，基于Vue.js开发，用于博客内容的管理。
+
+## 主要目录结构
+
+- **src/api/**: API请求封装
+  - 主要API文件: [src/api/blog.js](mdc:blog-cms/src/api/blog.js)
+
+- **src/views/**: 页面组件
+  - `blog/`: 博客文章管理
+  - `category/`: 分类管理
+  - `tag/`: 标签管理
+  - `comment/`: 评论管理
+  - `system/`: 系统设置
+
+- **src/components/**: 通用组件
+
+- **src/router/**: 前端路由配置
+  - 主路由配置: [src/router/index.js](mdc:blog-cms/src/router/index.js)
+
+- **src/store/**: Vuex状态管理
+  - 主存储配置: [src/store/index.js](mdc:blog-cms/src/store/index.js)
+
+## 关键文件
+
+- 入口文件: [src/main.js](mdc:blog-cms/src/main.js)
+- 主应用组件: [src/App.vue](mdc:blog-cms/src/App.vue)
+- 全局样式: [src/assets/styles/index.scss](mdc:blog-cms/src/assets/styles/index.scss)
+

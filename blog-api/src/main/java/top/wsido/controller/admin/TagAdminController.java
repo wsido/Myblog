@@ -17,6 +17,10 @@ import top.wsido.model.vo.Result;
 import top.wsido.service.BlogService;
 import top.wsido.service.TagService;
 import top.wsido.util.StringUtils;
+import top.wsido.util.SecurityUtils;
+import top.wsido.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @Description: 博客标签后台管理
@@ -26,10 +30,14 @@ import top.wsido.util.StringUtils;
 @RestController
 @RequestMapping("/admin")
 public class TagAdminController {
+	private static final Logger logger = LoggerFactory.getLogger(TagAdminController.class);
+
 	@Autowired
 	BlogService blogService;
 	@Autowired
 	TagService tagService;
+	@Autowired
+	private SecurityUtils securityUtils;
 
 	/**
 	 * 获取博客标签列表
@@ -40,6 +48,11 @@ public class TagAdminController {
 	 */
 	@GetMapping("/tags")
 	public Result tags(@RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "10") Integer pageSize) {
+		User currentUser = securityUtils.getCurrentUser();
+		logger.info("[TagAdminController.tags] Current user from SecurityUtils: Username: {}, Type: {}", 
+				(currentUser != null ? currentUser.getUsername() : "null"), 
+				(currentUser != null ? currentUser.getType() : "null"));
+
 		String orderBy = "id desc";
 		PageHelper.startPage(pageNum, pageSize, orderBy);
 		PageInfo<Tag> pageInfo = new PageInfo<>(tagService.getTagList());

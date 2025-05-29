@@ -1,21 +1,17 @@
 package top.wsido.model.vo;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @Description: 分类和博客数量
  * @Author: wsido
  * @Date: 2020-10-08
  */
+@Data
 @NoArgsConstructor
-@Getter
-@Setter
-@ToString
 public class CategoryBlogCount {
-	private Long id;
-	private String name;//分类名
-	private Integer value;//分类下博客数量
+	private Long id;    // Corresponds to category_id in mapper, typically the category ID
+	private String name;  // To store the category name
+	private Integer value; // Corresponds to blog_count in mapper, the count of blogs
 }

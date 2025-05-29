@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 后端API结构
+
+`blog-api`模块是基于Spring Boot的后端服务，遵循MVC架构。
+
+## 主要包结构
+
+- **controller**: API端点定义
+  - `admin/`: 管理员API接口
+  - `user/`: 用户端API接口
+
+- **service**: 业务逻辑
+  - `impl/`: 服务接口实现类
+
+- **mapper**: 数据库访问层
+
+- **entity**: 数据库实体类
+
+- **model**: 数据传输对象
+  - `dto/`: 数据传输对象
+  - `vo/`: 视图对象
+
+- **util**: 工具类
+  - `markdown/`: Markdown解析相关
+  - `upload/`: 文件上传相关
+  - `comment/`: 评论相关
+
+## 主要配置
+
+- 应用配置: [src/main/resources/application.yml](mdc:src/main/resources/application.yml)
+- MyBatis映射: [src/main/resources/mapper/](mdc:src/main/resources/mapper)
+

@@ -44,6 +44,10 @@ public class Result {
 		return new Result(500, msg);
 	}
 
+	public static Result error(Integer code, String msg) {
+		return new Result(code, msg);
+	}
+
 	public static Result error() {
 		return new Result(500, "异常错误");
 	}

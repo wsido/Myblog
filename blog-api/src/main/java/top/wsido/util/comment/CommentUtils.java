@@ -240,7 +240,6 @@ public class CommentUtils {
 		comment.setCreateTime(new Date());
 		comment.setPublished(true);
 		comment.setAvatar(admin.getAvatar());
-		comment.setWebsite("/");
 		comment.setNickname(admin.getNickname());
 		comment.setEmail(admin.getEmail());
 		comment.setNotice(false);
@@ -259,6 +258,27 @@ public class CommentUtils {
 	}
 
 	/**
+	 * 设置认证用户评论属性
+	 *
+	 * @param comment 评论DTO
+	 * @param request HttpServletRequest
+	 * @param user    认证用户信息
+	 */
+	public void setAuthenticatedUserComment(Comment comment, HttpServletRequest request, User user) {
+		comment.setUserId(user.getId());
+		comment.setAdminComment(false); // 明确不是管理员评论
+		comment.setCreateTime(new Date());
+		comment.setPublished(commentDefaultOpen); // 根据配置决定是否默认公开
+		comment.setIp(IpAddressUtils.getIpAddress(request));
+
+		// 优先使用用户账户中的信息
+		comment.setAvatar(user.getAvatar());
+		comment.setNickname(user.getNickname());
+		comment.setEmail(user.getEmail());
+		// comment.getNotice() 来自表单，保留用户选择
+	}
+
+	/**
 	 * 设置访客评论属性
 	 *
 	 * @param comment 当前收到的评论
@@ -268,10 +288,6 @@ public class CommentUtils {
 		comment.setNickname(comment.getNickname().trim());
 		setCommentRandomAvatar(comment);
 
-		//check website
-		if (!isValidUrl(comment.getWebsite())) {
-			comment.setWebsite("");
-		}
 		comment.setAdminComment(false);
 		comment.setCreateTime(new Date());
 		comment.setPublished(commentDefaultOpen);
@@ -293,15 +309,5 @@ public class CommentUtils {
 			redisService.saveKVToHash(RedisKeyConstants.QQ_AVATAR_URL_MAP, qq, uploadAvatarUrl);
 		}
 		comment.setAvatar(uploadAvatarUrl);
-	}
-
-	/**
-	 * URL合法性校验
-	 *
-	 * @param url url
-	 * @return 是否合法
-	 */
-	private static boolean isValidUrl(String url) {
-		return url.matches("^https?://([^!@#$%^&*?.\\s-]([^!@#$%^&*?.\\s]{0,63}[^!@#$%^&*?.\\s])?\\.)+[a-z]{2,6}/?");
 	}
 }

@@ -94,9 +94,22 @@
 </template>
 
 <script>
-	import { deleteCommentById, editComment, getBlogList, getCommentListByQuery, updateNotice, updatePublished } from '@/api/comment';
+	import { 
+		deleteCommentById, 
+		editComment, 
+		getBlogList, 
+		getCommentListByQuery, 
+		updateNotice, 
+		updatePublished,
+		getCurrentUserCommentListByQuery,
+		deleteCurrentUserCommentById,
+		editCurrentUserComment,
+		updateCurrentUserCommentPublished,
+		updateCurrentUserCommentNotice 
+	} from '@/api/comment';
 import Breadcrumb from "@/components/Breadcrumb";
 import { checkEmail } from "@/util/reg";
+import { mapGetters } from 'vuex';
 
 	export default {
 		name: "CommentList",
@@ -143,16 +156,60 @@ import { checkEmail } from "@/util/reg";
 				}
 			}
 		},
+		computed: {
+			...mapGetters(['roles', 'userId']),
+			isAdmin() {
+				return this.roles && this.roles.includes('admin');
+			},
+			viewScope() {
+				return this.$route.meta.scope;
+			}
+		},
 		created() {
 			this.getCommentList()
 			this.getBlogList()
 		},
 		methods: {
 			getCommentList() {
-				getCommentListByQuery(this.queryInfo).then(res => {
-					this.commentList = res.data.list
-					this.total = res.data.total
-				})
+				const params = { ...this.queryInfo }
+				if (this.viewScope === 'currentUserCMS') {
+					getCurrentUserCommentListByQuery(params).then(res => {
+						if (res.code === 200 && res.data) {
+							this.commentList = res.data.list; // 确保从PageInfo获取列表
+							this.total = res.data.total;   // 确保从PageInfo获取总数
+						} else {
+							this.commentList = [];
+							this.total = 0;
+							// this.msgError(res.msg || '获取我的评论列表失败'); // 可以选择性地提示用户
+						}
+					}).catch(err => {
+						console.error("Error fetching current user comments:", err);
+						this.commentList = [];
+						this.total = 0;
+						// this.msgError('获取我的评论列表失败，请检查网络或联系管理员');
+					});
+				} else {
+					// 对管理员视图，可以加上额外参数以获取全部评论
+					if (this.isAdmin && this.viewScope === 'all') {
+						params.scope = 'all';
+					}
+					
+					getCommentListByQuery(params).then(res => {
+						if (res.code === 200 && res.data && res.data.comments) {
+							this.commentList = res.data.comments.list; // 正确路径
+							this.total = res.data.allComment; // 正确路径
+						} else {
+							this.commentList = [];
+							this.total = 0;
+							// this.msgError(res.msg || '获取评论列表失败');
+						}
+					}).catch(err => {
+						console.error("Error fetching comments for admin view:", err);
+						this.commentList = [];
+						this.total = 0;
+						// this.msgError('获取评论列表失败，请检查网络或联系管理员');
+					});
+				}
 			},
 			getBlogList() {
 				getBlogList().then(res => {
@@ -191,22 +248,44 @@ import { checkEmail } from "@/util/reg";
 			},
 			//切换评论公开状态（如果切换成隐藏，则该评论的所有子评论都修改为同样的隐藏状态）
 			commentPublishedChanged(row) {
+				// 根据视图范围决定使用哪个更新API
+				const updateFn = this.viewScope === 'currentUser' ? 
+					updateCurrentUserCommentPublished : 
+					updatePublished;
+					
 				if (row.published) {
-					updatePublished(row.id, row.published).then(res => {
+					updateFn(row.id, row.published).then(res => {
 						this.msgSuccess(res.msg)
-					})
+					}).catch(err => {
+						// 如果专属API调用失败，尝试使用admin API
+						if (this.viewScope === 'currentUser') {
+							updatePublished(row.id, row.published).then(res => {
+								this.msgSuccess(res.msg)
+							});
+						}
+					});
 				} else {
 					//切换成隐藏状态
 					let replyCommentList = []
 					replyCommentList.push(row)
 					this.getAllReplyCommentList(row, replyCommentList)
 
-					updatePublished(row.id, row.published).then(res => {
+					updateFn(row.id, row.published).then(res => {
 						this.msgSuccess(res.msg)
 						replyCommentList.forEach(comment => {
 							comment.published = row.published
 						})
-					})
+					}).catch(err => {
+						// 如果专属API调用失败，尝试使用admin API
+						if (this.viewScope === 'currentUser') {
+							updatePublished(row.id, row.published).then(res => {
+								this.msgSuccess(res.msg)
+								replyCommentList.forEach(comment => {
+									comment.published = row.published
+								})
+							});
+						}
+					});
 				}
 			},
 			//递归展开所有子评论
@@ -218,9 +297,21 @@ import { checkEmail } from "@/util/reg";
 			},
 			//切换评论邮件提醒状态
 			commentNoticeChanged(row) {
-				updateNotice(row.id, row.notice).then(res => {
+				// 根据视图范围决定使用哪个更新API
+				const updateFn = this.viewScope === 'currentUser' ? 
+					updateCurrentUserCommentNotice : 
+					updateNotice;
+					
+				updateFn(row.id, row.notice).then(res => {
 					this.msgSuccess(res.msg);
-				})
+				}).catch(err => {
+					// 如果专属API调用失败，尝试使用admin API
+					if (this.viewScope === 'currentUser') {
+						updateNotice(row.id, row.notice).then(res => {
+							this.msgSuccess(res.msg);
+						});
+					}
+				});
 			},
 			deleteCommentById(id) {
 				this.$confirm('此操作将永久删除该评论<strong style="color: red">及其所有子评论</strong>，是否删除?', '提示', {
@@ -229,10 +320,31 @@ import { checkEmail } from "@/util/reg";
 					type: 'warning',
 					dangerouslyUseHTMLString: true
 				}).then(() => {
-					deleteCommentById(id).then(res => {
-						this.msgSuccess(res.msg)
-						this.getCommentList()
-					})
+					const deleteFn = this.viewScope === 'currentUserCMS' ? 
+						deleteCurrentUserCommentById :
+						deleteCommentById;
+						
+					deleteFn(id).then(res => {
+						if (res.code === 200) {
+							this.msgSuccess(res.msg || '删除成功');
+						} else {
+							this.msgError(res.msg || '删除失败');
+						}
+						this.getCommentList();
+					}).catch(err => {
+						console.error("Error deleting comment:", err);
+						// No fallback to admin API for currentUserCMS scope
+						// For admin scope (else part of deleteFn determination), an error here is just an error.
+						if (err.response && err.response.data && err.response.data.msg) {
+							this.msgError(err.response.data.msg);
+						} else if (err.message) {
+							this.msgError(err.message);
+						} else {
+							this.msgError('删除评论失败，请重试');
+						}
+						// Optionally, refresh the list even on error if state might be inconsistent
+						// this.getCommentList(); 
+					});
 				}).catch(() => {
 					this.$message({
 						type: 'info',
@@ -260,11 +372,26 @@ import { checkEmail } from "@/util/reg";
 							ip: this.editForm.ip,
 							content: this.editForm.content,
 						}
-						editComment(form).then(res => {
+						
+						// 根据视图范围决定使用哪个编辑API
+						const editFn = this.viewScope === 'currentUser' ? 
+							editCurrentUserComment : 
+							editComment;
+							
+						editFn(form).then(res => {
 							this.msgSuccess(res.msg)
 							this.editDialogVisible = false
 							this.getCommentList()
-						})
+						}).catch(err => {
+							// 如果专属API调用失败，尝试使用admin API
+							if (this.viewScope === 'currentUser') {
+								editComment(form).then(res => {
+									this.msgSuccess(res.msg)
+									this.editDialogVisible = false
+									this.getCommentList()
+								});
+							}
+						});
 					}
 				})
 			}

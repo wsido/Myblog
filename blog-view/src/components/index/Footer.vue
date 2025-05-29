@@ -12,16 +12,13 @@
 					</div>
 				</div>
 
-				<div class="six wide column">
+				<div class="thirteen wide column">
 					<h4 class="ui inverted header m-text-thin m-text-spaced">最新博客</h4>
 					<div class="ui inverted link list">
 						<a href="javascript:;" @click.prevent="toBlog(item)" v-for="item in newBlogList" :key="item.id" class="item m-text-thin m-padded-tb-small">{{ item.title }}</a>
 					</div>
 				</div>
 
-				<div class="seven wide column">
-					<p class="m-text-thin m-text-spaced m-opacity-mini">这里原来是一言API显示的位置。</p>
-				</div>
 			</div>
 
 			<div class="ui inverted section divider"></div>

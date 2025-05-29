@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import top.wsido.model.vo.BlogInfo;
 import top.wsido.model.vo.PageResult;
 import top.wsido.service.RedisService;
@@ -27,7 +29,7 @@ public class RedisServiceImpl implements RedisService {
 	public PageResult<BlogInfo> getBlogInfoPageResultByHash(String hash, Integer pageNum) {
 		if (jsonRedisTemplate.opsForHash().hasKey(hash, pageNum)) {
 			Object redisResult = jsonRedisTemplate.opsForHash().get(hash, pageNum);
-			PageResult<BlogInfo> pageResult = JacksonUtils.convertValue(redisResult, PageResult.class);
+			PageResult<BlogInfo> pageResult = JacksonUtils.convertValue(redisResult, new TypeReference<PageResult<BlogInfo>>() {});
 			return pageResult;
 		} else {
 			return null;

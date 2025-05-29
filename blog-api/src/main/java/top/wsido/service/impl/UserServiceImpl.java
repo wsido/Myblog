@@ -193,6 +193,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Override
 	public Result getUserInfo() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		// ---------- DEBUGGING START ----------
+		if (authentication != null) {
+			System.out.println("UserServiceImpl.getUserInfo(): START DEBUG");
+			System.out.println("UserServiceImpl.getUserInfo(): authentication.getName() = " + authentication.getName());
+			System.out.println("UserServiceImpl.getUserInfo(): authentication.getAuthorities() = " + authentication.getAuthorities());
+			System.out.println("UserServiceImpl.getUserInfo(): authentication.getPrincipal() = " + authentication.getPrincipal().toString());
+			System.out.println("UserServiceImpl.getUserInfo(): END DEBUG");
+		} else {
+			System.out.println("UserServiceImpl.getUserInfo(): authentication is NULL");
+		}
+		// ---------- DEBUGGING END ----------
+
 		if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
             return Result.error("用户未登录");
         }

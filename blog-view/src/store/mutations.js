@@ -14,6 +14,10 @@ import {
 	SET_FOCUS_MODE,
 	SET_IS_BLOG_TO_HOME,
 	SAVE_CLIENT_SIZE,
+	SET_USER,
+	SET_USER_TOKEN,
+	CLEAR_USER_DATA,
+	UPDATE_COMMENT_FORM_FIELD,
 } from "./mutations-types";
 
 export default {
@@ -77,5 +81,22 @@ export default {
 	},
 	[SAVE_CLIENT_SIZE](state, clientSize) {
 		state.clientSize = clientSize
+	},
+	[SET_USER](state, userData) {
+		state.user = userData;
+	},
+	[SET_USER_TOKEN](state, token) {
+		state.userToken = token;
+		window.localStorage.setItem('userToken', token);
+	},
+	[CLEAR_USER_DATA](state) {
+		state.user = null;
+		state.userToken = null;
+		window.localStorage.removeItem('userToken');
+	},
+	[UPDATE_COMMENT_FORM_FIELD](state, payload) {
+		if (payload && typeof payload.field === 'string') {
+			state.commentForm[payload.field] = payload.value;
+		}
 	},
 }

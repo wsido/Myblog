@@ -92,8 +92,8 @@
 		methods: {
 			getData() {
 				getData(this.queryInfo).then(res => {
-					this.categoryList = res.data.list
-					this.total = res.data.total
+					this.categoryList = res.data.categories || [];
+					this.total = this.categoryList.length;
 				})
 			},
 			//监听 pageSize 改变事件

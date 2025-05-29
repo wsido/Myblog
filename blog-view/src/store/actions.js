@@ -3,10 +3,14 @@ import {
 	SET_PARENT_COMMENT_ID,
 	RESET_COMMENT_FORM,
 	SET_BLOG_PASSWORD_DIALOG_VISIBLE,
-	SET_BLOG_PASSWORD_FORM
+	SET_BLOG_PASSWORD_FORM,
+	SET_USER,
+	SET_USER_TOKEN,
+	CLEAR_USER_DATA,
 } from "./mutations-types";
 
 import {getCommentListByQuery, submitComment} from "@/api/comment";
+import { userLogin as apiUserLogin, getUserInfo as apiGetUserInfo } from "@/api/user";
 import {Message, Notification} from "element-ui";
 import router from "../router";
 import tvMapper from '@/plugins/tvMapper.json'
@@ -109,5 +113,52 @@ export default {
 		} else {
 			router.push(`/blog/${blog.id}`)
 		}
+	},
+	async login({ commit, dispatch }, loginForm) {
+		try {
+			const res = await apiUserLogin(loginForm);
+			if (res.code === 200 && res.data && res.data.token) {
+				commit(SET_USER_TOKEN, res.data.token);
+				// 登录成功后立即获取用户信息
+				await dispatch('fetchUserInfo');
+				Message.success(res.msg || '登录成功');
+				return Promise.resolve(res);
+			} else {
+				Message.error(res.msg || '登录失败');
+				return Promise.reject(res);
+			}
+		} catch (error) {
+			Message.error('登录请求异常');
+			console.error("Login action error:", error);
+			return Promise.reject(error);
+		}
+	},
+	async fetchUserInfo({ commit, state }) {
+		if (!state.userToken) {
+			return Promise.resolve(); // 没有token，无需获取
+		}
+		try {
+			const res = await apiGetUserInfo(); // getUserInfo API 应配置为自动携带token (通过axios拦截器)
+			if (res.code === 200 && res.data) {
+				commit(SET_USER, res.data);
+				return Promise.resolve(res.data);
+			} else {
+				// Token可能失效或无效，清除本地数据
+				commit(CLEAR_USER_DATA);
+				Message.error(res.msg || '获取用户信息失败');
+				return Promise.reject(res);
+			}
+		} catch (error) {
+			commit(CLEAR_USER_DATA); // 发生异常也清除数据
+			Message.error('获取用户信息请求异常');
+			console.error("fetchUserInfo action error:", error);
+			return Promise.reject(error);
+		}
+	},
+	logout({ commit }) {
+		commit(CLEAR_USER_DATA);
+		// 可选: 通知后端进行登出操作
+		Message.success('已退出登录');
+		router.push('/login'); // 跳转到登录页
 	},
 }

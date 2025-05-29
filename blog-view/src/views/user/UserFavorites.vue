@@ -79,43 +79,21 @@ export default {
     fetchUserFavorites() {
       this.loading = true
       getUserFavorites(this.pageNum, this.pageSize).then(res => {
-        if (res.code === 200) {
-          this.favorites = res.data.favorites || []
+        if (res.code === 200 && res.data) {
+          this.favorites = res.data.list || []
           this.total = res.data.total || 0
         } else {
-          this.$message.error('获取收藏列表失败')
+          this.$message.error(res.msg || '获取收藏列表失败')
+          this.favorites = []
+          this.total = 0
         }
         this.loading = false
-      }).catch(() => {
-        // 如果API尚未实现，使用模拟数据
-        // 这段代码可以在API实现后删除
-        this.favorites = [
-          {
-            id: 1,
-            title: '示例博客文章标题1',
-            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-            firstPicture: 'https://via.placeholder.com/300x200',
-            views: 1234,
-            favoriteTime: new Date(),
-            category: {
-              name: '技术'
-            }
-          },
-          {
-            id: 2,
-            title: '示例博客文章标题2',
-            description: 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-            firstPicture: 'https://via.placeholder.com/300x200',
-            views: 567,
-            favoriteTime: new Date(Date.now() - 86400000),
-            category: {
-              name: '生活'
-            }
-          }
-        ]
-        this.total = 2
+      }).catch((error) => {
+        this.$message.error('请求收藏列表接口失败')
+        console.error("Error fetching user favorites:", error);
+        this.favorites = []
+        this.total = 0
         this.loading = false
-        console.warn('使用模拟数据，API尚未实现')
       })
     },
     handleCurrentChange(newPage) {
@@ -136,18 +114,17 @@ export default {
         removeFavorite(blog.id).then(res => {
           if (res.code === 200) {
             this.$message.success('取消收藏成功')
-            // 更新本地数据，避免重新请求
             this.favorites = this.favorites.filter(item => item.id !== blog.id)
-            this.total -= 1
+            if (this.favorites.length === 0 && this.pageNum > 1) {
+              this.pageNum -=1;
+            }
+            this.fetchUserFavorites();
           } else {
             this.$message.error(res.msg || '操作失败')
           }
-        }).catch(() => {
-          // 如果API尚未实现，使用模拟数据
-          this.favorites = this.favorites.filter(item => item.id !== blog.id)
-          this.total -= 1
-          this.$message.success('取消收藏成功')
-          console.warn('使用模拟数据，API尚未实现')
+        }).catch((error) => {
+          this.$message.error('请求取消收藏接口失败')
+          console.error("Error removing favorite:", error);
         })
       }).catch(() => {
         // 取消操作，不做处理

@@ -54,12 +54,12 @@
 				if (this.$route.params.id) {
 					updateMoment(this.form).then(res => {
 						this.msgSuccess(res.msg)
-						this.$router.push('/blog/moment/list')
+						this.$router.push('/my-blog/moment/list')
 					})
 				} else {
 					saveMoment(this.form).then(res => {
 						this.msgSuccess(res.msg)
-						this.$router.push('/blog/moment/list')
+						this.$router.push('/my-blog/moment/list')
 					})
 				}
 			}

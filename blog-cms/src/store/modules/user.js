@@ -70,6 +70,7 @@ const actions = {
       getUserInfoFromApi().then(response => {
         // Backend /admin/user returns Result { code, msg, data: UserObject }
         const { data } = response; // data here is the UserObject from backend
+        console.log('User/getInfo backend response data:', JSON.stringify(data)); // DEBUG ADDED
         if (!data || !data.username || !data.id) {
           return reject('Verification failed, please Login again.');
         }
@@ -77,6 +78,7 @@ const actions = {
         // Backend user object has: id, username, nickname, avatar, email, role, type
         // The `roles` array for Vuex should be like ['admin'] or ['user']
         const roles = data.type ? [data.type.toLowerCase()] : (data.role ? [data.role.toLowerCase().replace('role_', '')] : []);
+        console.log('User/getInfo determined roles:', JSON.stringify(roles)); // DEBUG ADDED
 
         commit('SET_ID', data.id);
         commit('SET_ROLES', roles);

@@ -18,7 +18,7 @@
 						<!--中间-->
 						<div class="ten wide column">
 							<keep-alive include="Home">
-								<router-view/>
+								<router-view :key="$route.fullPath"/>
 							</keep-alive>
 						</div>
 						<!--右侧-->
@@ -110,6 +110,7 @@ import { mapState } from 'vuex';
 						this.newBlogList = res.data.newBlogList
 						this.categoryList = res.data.categoryList
 						this.tagList = res.data.tagList
+						console.log('Index.vue - Updated tagList from API:', this.tagList);
 						this.randomBlogList = res.data.randomBlogList
 						this.$store.commit(SAVE_SITE_INFO, this.siteInfo)
 						this.$store.commit(SAVE_INTRODUCTION, res.data.introduction)

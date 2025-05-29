@@ -91,19 +91,17 @@ import { isImgExt } from "@/util/validate";
 				isCDN: true,
 				isCustomPath: false,
 				customPath: '',
+				userInfo: { login: null, avatar_url: null },
 			}
 		},
 		computed: {
 			realPath() {
 				if (!this.userInfo || !this.userInfo.login || !this.activeRepos) {
-					// Return a non-slash path or an empty string if essential info is missing
-					// to avoid constructing an invalid path that might lead to errors elsewhere.
 					return '（请先选择仓库并确保GitHub配置正确）'; 
 				}
 				if (this.isCustomPath) {
 					return `/${this.userInfo.login}/${this.activeRepos}/${this.customPath}`
 				}
-				// Ensure activePath is an array and join correctly. Add trailing slash if it's a directory path.
 				const currentPath = Array.isArray(this.activePath) ? this.activePath.join('/') : '';
 				return `/${this.userInfo.login}/${this.activeRepos}${currentPath ? '/' + currentPath : ''}/`
 			}
@@ -113,49 +111,43 @@ import { isImgExt } from "@/util/validate";
 			this.hintShow2 = localStorage.getItem('hintShow2') ? false : true
 			this.hintShow3 = localStorage.getItem('hintShow3') ? false : true
 			const token = localStorage.getItem('githubToken')
-			const userInfo = localStorage.getItem('githubUserInfo')
-			if (token && userInfo) {
-				this.userInfo = JSON.parse(userInfo)
-				this.getRepos()
+			const storedUserInfo = localStorage.getItem('githubUserInfo')
+			if (token && storedUserInfo) {
+				try {
+					const parsedUserInfo = JSON.parse(storedUserInfo);
+					if (parsedUserInfo && parsedUserInfo.login) {
+						this.userInfo = parsedUserInfo;
+						this.getRepos();
+					} else {
+						this.userInfo = { login: null, avatar_url: null }; 
+						this.msgError('GitHub用户信息配置不完整或已损坏，请重新配置Token');
+						this.$router.push('/admin/pictureHosting/setting');
+					}
+				} catch (e) {
+					this.userInfo = { login: null, avatar_url: null };
+					this.msgError('GitHub用户信息解析失败，请重新配置Token');
+					this.$router.push('/admin/pictureHosting/setting');
+				}
 			} else {
-				this.msgError('请先配置Token')
-				this.$router.push('/pictureHosting/setting')
+				this.msgError('请先配置GitHub Token');
+				this.$router.push('/admin/pictureHosting/setting');
 			}
 		},
 		methods: {
-			//获取用户仓库
 			getRepos() {
 				getUserRepos(this.userInfo.login).then(res => {
 					this.reposList = res
 				})
 			},
 			changeRepos() {
-				this.resourceShow++ //改变级联选择器的key来重置其中选项内容
-				this.activePath = [''] //默认选中根目录
+				this.resourceShow++
+				this.activePath = ['']
 				this.fileList = []
 			},
-			//遍历目录树 貌似目录级数太多 组件加载不出来？
-			/*
-			selectRepos(fatherPathArr, fatherPath) {
-				getReposContents(this.userInfo.login, this.activeRepos, fatherPath).then(res => {
-					res.forEach(item => {
-						if (item.type === 'dir') {
-							fatherPathArr.push({value: item.name, label: item.name})
-						}
-					})
-					fatherPathArr.forEach(item => {
-						item['children'] = []
-						this.selectRepos(item.children, `${fatherPath}/${item.value}`)
-					})
-				})
-			},
-			*/
-			//换成懒加载
 			async getReposContents(arr, path) {
 				await getReposContents(this.userInfo.login, this.activeRepos, path).then(res => {
 					res.forEach(item => {
 						if (item.type === 'dir') {
-							//让所有节点都是非叶子节点
 							arr.push({value: item.name, label: item.name, leaf: false})
 						}
 					})
@@ -179,7 +171,6 @@ import { isImgExt } from "@/util/validate";
 				return this.isCDN ? `https://fastly.jsdelivr.net/gh/${this.userInfo.login}/${this.activeRepos}/${file.path}` : file.download_url
 			},
 			copy(type, file) {
-				// type 1 cdn link  2 Markdown
 				let imgUrl = `https://fastly.jsdelivr.net/gh/${this.userInfo.login}/${this.activeRepos}/${file.path}`
 				let copyCont = imgUrl
 				if (type == 2) {
@@ -210,10 +201,8 @@ import { isImgExt } from "@/util/validate";
 				})
 			},
 			submitUpload() {
-				//https://github.com/ElemeFE/element/issues/12080
 				this.uploadList = this.$refs.uploadRef.uploadFiles
 				if (this.uploadList.length) {
-					//触发 el-upload 中 http-request 绑定的函数
 					this.$refs.uploadRef.submit()
 				} else {
 					this.msgError('请先选择文件')
@@ -228,7 +217,6 @@ import { isImgExt } from "@/util/validate";
 					if (this.nameType === '2') {
 						fileName = randomUUID() + fileName.substr(fileName.lastIndexOf("."))
 					}
-					//批量上传需要间隔时间，否则可能commit版本号冲突，返回409错误码，Status: 409 Conflict
 					taskQueue(() => this.push2Github(data, fileName, base64), 1000)
 				})
 			},

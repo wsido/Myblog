@@ -27,57 +27,26 @@
 			</el-row>
 		</el-card>
 
+		<!-- 本地存储配置卡片 (如果需要，可以在此添加) -->
+		<!-- 
 		<el-card>
 			<div slot="header">
-				<span>又拍云存储配置</span>
+				<span>本地存储配置</span>
 			</div>
-			<el-form :model="upyunConfig" label-width="100px">
-				<el-form-item label="操作员名称">
-					<el-input v-model="upyunConfig.username"></el-input>
+			<el-form label-width="100px">
+				<el-form-item label="上传URL">
+					<el-input v-model="localStoreConfig.uploadUrl" placeholder="/api/admin/upload/image (示例)"></el-input>
 				</el-form-item>
-				<el-form-item label="操作员密码">
-					<el-input v-model="upyunConfig.password"></el-input>
-				</el-form-item>
-				<el-form-item label="存储空间名">
-					<el-input v-model="upyunConfig.bucketName"></el-input>
-				</el-form-item>
-				<el-form-item label="CDN访问域名">
-					<el-input v-model="upyunConfig.domain"></el-input>
-				</el-form-item>
-				<el-button type="primary" size="medium" icon="el-icon-check" :disabled="!isUpyunSave" @click="saveUpyun(true)">保存配置</el-button>
-				<el-button type="info" size="medium" icon="el-icon-close" @click="saveUpyun(false)">清除配置</el-button>
+				<el-button type="primary" size="medium" icon="el-icon-check" @click="saveLocalStoreConfig(true)">保存配置</el-button>
+				<el-button type="info" size="medium" icon="el-icon-close" @click="saveLocalStoreConfig(false)">清除配置</el-button>
 			</el-form>
 		</el-card>
-
-		<el-card>
-			<div slot="header">
-				<span>腾讯云存储配置</span>
-			</div>
-			<el-form :model="txyunConfig" label-width="100px">
-				<el-form-item label="secret-id">
-					<el-input v-model="txyunConfig.secretId"></el-input>
-				</el-form-item>
-				<el-form-item label="secret-key">
-					<el-input v-model="txyunConfig.secretKey"></el-input>
-				</el-form-item>
-				<el-form-item label="存储空间名">
-					<el-input v-model="txyunConfig.bucketName"></el-input>
-				</el-form-item>
-				<el-form-item label="地域">
-					<el-input v-model="txyunConfig.region"></el-input>
-				</el-form-item>
-				<el-form-item label="CDN访问域名">
-					<el-input v-model="txyunConfig.domain"></el-input>
-				</el-form-item>
-				<el-button type="primary" size="medium" icon="el-icon-check" :disabled="!isTxyunSave" @click="saveTxyun(true)">保存配置</el-button>
-				<el-button type="info" size="medium" icon="el-icon-close" @click="saveTxyun(false)">清除配置</el-button>
-			</el-form>
-		</el-card>
+	 	-->
 	</div>
 </template>
 
 <script>
-import {getUserInfo} from "@/api/github";
+import { getUserInfo } from "@/api/github";
 
 export default {
 	name: "Setting",
@@ -89,28 +58,11 @@ export default {
 			},
 			isGithubSave: false,
 			hintShow: false,
-			upyunConfig: {
-				username: '',
-				password: '',
-				bucketName: '',
-				domain: ''
-			},
-			txyunConfig: {
-				secretId: '',
-				secretKey: '',
-				bucketName: '',
-				region: '',
-				domain: ''
-			},
+			// localStoreConfig: { uploadUrl: '' } // 如果添加本地存储，可以在此定义
 		}
 	},
 	computed: {
-		isUpyunSave() {
-			return this.upyunConfig.username && this.upyunConfig.password && this.upyunConfig.bucketName && this.upyunConfig.domain
-		},
-		isTxyunSave() {
-			return this.txyunConfig.secretId && this.txyunConfig.secretKey && this.txyunConfig.bucketName && this.txyunConfig.region && this.txyunConfig.domain
-		}
+		// 如果有本地存储的保存按钮启用逻辑，可以在此添加
 	},
 	created() {
 		this.githubToken = localStorage.getItem("githubToken")
@@ -122,15 +74,10 @@ export default {
 			this.githubUserInfo = {login: '未配置'}
 		}
 
-		const upyunConfig = localStorage.getItem('upyunConfig')
-		if (upyunConfig) {
-			this.upyunConfig = JSON.parse(upyunConfig)
-		}
-
-		const txyunConfig = localStorage.getItem('txyunConfig')
-		if (txyunConfig) {
-			this.txyunConfig = JSON.parse(txyunConfig)
-		}
+		// const localStoreConfig = localStorage.getItem('localStoreConfig') // 如果添加本地存储
+		// if (localStoreConfig) { // 如果添加本地存储
+		// 	this.localStoreConfig = JSON.parse(localStoreConfig) // 如果添加本地存储
+		// }
 
 		const userJson = window.localStorage.getItem('user') || '{}'
 		const user = JSON.parse(userJson)
@@ -160,27 +107,16 @@ export default {
 				this.msgSuccess('清除成功')
 			}
 		}
-		,
-		saveUpyun(save) {
-			if (save) {
-				localStorage.setItem('upyunToken', btoa(`${this.upyunConfig.username}:${this.upyunConfig.password}`))
-				localStorage.setItem('upyunConfig', JSON.stringify(this.upyunConfig))
-				this.msgSuccess('保存成功')
-			} else {
-				localStorage.removeItem('upyunConfig')
-				this.msgSuccess('清除成功')
-			}
-		}
-		,
-		saveTxyun(save) {
-			if (save) {
-				localStorage.setItem('txyunConfig', JSON.stringify(this.txyunConfig))
-				this.msgSuccess('保存成功')
-			} else {
-				localStorage.removeItem('txyunConfig')
-				this.msgSuccess('清除成功')
-			}
-		}
+		// ,
+		// saveLocalStoreConfig(save) { // 如果添加本地存储
+		// 	if (save) {
+		// 		localStorage.setItem('localStoreConfig', JSON.stringify(this.localStoreConfig))
+		// 		this.msgSuccess('保存成功')
+		// 	} else {
+		// 		localStorage.removeItem('localStoreConfig')
+		// 		this.msgSuccess('清除成功')
+		// 	}
+		// }
 	}
 	,
 }

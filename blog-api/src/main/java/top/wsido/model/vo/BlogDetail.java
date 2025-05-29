@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 import top.wsido.entity.Category;
 import top.wsido.entity.Tag;
+// import top.wsido.entity.User; // No longer directly using User entity here
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,6 +25,8 @@ public class BlogDetail {
 	private Long id;
 	private String title;//文章标题
 	private String content;//文章正文
+	private Boolean published; // 新增
+	private Boolean recommend; // 新增
 	private Boolean appreciation;//赞赏开关
 	private Boolean commentEnabled;//评论开关
 	private Boolean top;//是否置顶
@@ -36,4 +39,5 @@ public class BlogDetail {
 
 	private Category category;//文章分类
 	private List<Tag> tags = new ArrayList<>();//文章标签
+	private UserInfo user; // 新增，用于显示作者信息
 }

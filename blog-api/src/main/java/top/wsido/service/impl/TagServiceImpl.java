@@ -50,9 +50,20 @@ public class TagServiceImpl implements TagService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void saveTag(Tag tag) {
-		if (tagMapper.saveTag(tag) != 1) {
-			throw new PersistenceException("标签添加失败");
+		System.out.println("TagServiceImpl: Attempting to save tag to DB: " + tag.getName() + ", color: " + tag.getColor());
+		try {
+			int result = tagMapper.saveTag(tag);
+			System.out.println("TagServiceImpl: Result of tagMapper.saveTag: " + result + ". Tag ID after save: " + tag.getId());
+			if (result != 1) {
+				System.err.println("TagServiceImpl: PersistenceException - Tag save failed, result was not 1. Tag: " + tag.getName());
+				throw new PersistenceException("标签添加失败，数据库操作未返回预期结果。");
+			}
+		} catch (Exception e) {
+			System.err.println("TagServiceImpl: Exception during tagMapper.saveTag for tag: " + tag.getName());
+			e.printStackTrace(); // 打印详细的异常堆栈
+			throw new PersistenceException("标签添加失败，数据库操作异常: " + e.getMessage(), e);
 		}
+		System.out.println("TagServiceImpl: Tag successfully saved to DB: " + tag.getName() + ". Now deleting Redis cache.");
 		redisService.deleteCacheByKey(RedisKeyConstants.TAG_CLOUD_LIST);
 	}
 

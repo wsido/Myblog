@@ -15,8 +15,8 @@
         <result property="page" column="page"/>
         <result property="notice" column="is_notice"/>
         <result property="parentCommentId" column="parent_comment_id"/>
-        <result property="website" column="website"/>
         <result property="qq" column="qq"/>
+        <result property="userId" column="user_id"/>
         <association property="blog" javaType="top.wsido.model.vo.BlogIdAndTitle">
             <id property="id" column="blog_id"/>
             <result property="title" column="title"/>
@@ -26,7 +26,7 @@
     <!--按页面和父评论id查询评论List-->
     <select id="getListByPageAndParentCommentId" resultMap="comment">
         select c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip, c.is_published, c.is_admin_comment, c.page,
-        c.is_notice, c.parent_comment_id, c.website, c.blog_id, c.qq, b.title
+        c.is_notice, c.parent_comment_id, c.blog_id, c.qq, c.user_id, b.title
         from comment as c left join blog as b on c.blog_id=b.id
         <where>
             <if test="page!=null">
@@ -42,9 +42,37 @@
     <!--按父评论id查询评论List-->
     <select id="getListByParentCommentId" resultMap="comment">
         select c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip, c.is_published, c.is_admin_comment, c.page,
-               c.is_notice, c.parent_comment_id, c.website, c.qq, c.blog_id, b.title
+               c.is_notice, c.parent_comment_id, c.qq, c.user_id, c.blog_id, b.title
         from comment as c left join blog as b on c.blog_id=b.id
         where c.parent_comment_id=#{parentCommentId}
+    </select>
+
+    <!--按昵称查询评论List-->
+    <select id="getListByNickname" resultMap="comment">
+        select c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip, c.is_published, c.is_admin_comment, c.page,
+               c.is_notice, c.parent_comment_id, c.qq, c.user_id, c.blog_id, b.title
+        from comment as c left join blog as b on c.blog_id=b.id
+        where c.nickname=#{nickname}
+        order by c.create_time desc
+    </select>
+
+    <!--按昵称、页面和博客ID查询评论List-->
+    <select id="getListByNicknameAndPageAndBlogId" resultMap="comment">
+        select c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip, c.is_published, c.is_admin_comment, c.page,
+        c.is_notice, c.parent_comment_id, c.qq, c.user_id, c.blog_id, b.title
+        from comment as c left join blog as b on c.blog_id=b.id
+        <where>
+            c.nickname=#{nickname}
+            <if test="page != null">
+                AND c.page=#{page}
+            </if>
+            <if test="page == 0 and blogId != null">
+                AND c.blog_id=#{blogId}
+            </if>
+            <!-- 通常用户评论列表只显示顶级评论，子评论通过递归加载 -->
+            AND c.parent_comment_id = -1 
+        </where>
+        order by c.create_time desc
     </select>
 
     <resultMap id="pageComment" type="top.wsido.model.vo.PageComment">
@@ -53,7 +81,6 @@
         <result property="content" column="content"/>
         <result property="avatar" column="avatar"/>
         <result property="createTime" column="create_time"/>
-        <result property="website" column="website"/>
         <result property="adminComment" column="is_admin_comment"/>
         <result property="parentCommentId" column="parent_comment_id"/>
         <result property="parentCommentNickname" column="parent_comment_nickname"/>
@@ -61,7 +88,7 @@
 
     <!--查询页面展示的评论List-->
     <select id="getPageCommentListByPageAndParentCommentId" resultMap="pageComment">
-        select c1.id, c1.nickname, c1.content, c1.avatar, c1.create_time, c1.is_admin_comment, c1.website,
+        select c1.id, c1.nickname, c1.content, c1.avatar, c1.create_time, c1.is_admin_comment, 
         c1.parent_comment_id as parent_comment_id, c2.nickname as parent_comment_nickname
         from comment as c1 left join comment as c2 on c1.parent_comment_id=c2.id
         where c1.page=#{page}
@@ -76,7 +103,7 @@
     <!--按id查询评论-->
     <select id="getCommentById" resultMap="comment">
         select c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip, c.is_published, c.is_admin_comment, c.page,
-               c.is_notice, c.parent_comment_id, c.website, c.qq, c.blog_id, b.title
+               c.is_notice, c.parent_comment_id, c.qq, c.user_id, c.blog_id, b.title
         from comment as c left join blog as b on c.blog_id=b.id
         where c.id=#{id}
     </select>
@@ -103,20 +130,24 @@
 
     <!--更新评论-->
     <update id="updateComment">
-        update comment set nickname=#{nickname}, avatar=#{avatar}, email=#{email}, ip=#{ip}, content=#{content}, website=#{website}
+        update comment set nickname=#{nickname}, avatar=#{avatar}, email=#{email}, ip=#{ip}, content=#{content}
         where id=#{id}
     </update>
 
     <!--按页面查询评论数量-->
     <select id="countByPageAndIsPublished" resultType="java.lang.Integer">
         select count(*) from comment
-        where page=#{page}
-        <if test="isPublished!=null">
-            and is_published=#{isPublished}
-        </if>
-        <if test="page==0 and blogId!=0">
-            and blog_id=#{blogId}
-        </if>
+        <where>
+            <if test="page != null">
+                AND page=#{page}
+                <if test="page==0 and blogId!=null and blogId!=0">
+                    AND blog_id=#{blogId}
+                </if>
+            </if>
+            <if test="isPublished != null">
+                AND is_published=#{isPublished}
+            </if>
+        </where>
     </select>
 
     <!--查询所有评论数量-->
@@ -126,10 +157,10 @@
 
     <!--保存评论-->
     <insert id="saveComment" useGeneratedKeys="true" keyProperty="id">
-        insert into comment (nickname, email, content, avatar, create_time, website, ip, is_published, is_admin_comment,
-        page, is_notice, parent_comment_id, blog_id, qq)
-        values (#{nickname}, #{email}, #{content}, #{avatar}, #{createTime}, #{website}, #{ip}, #{published}, #{adminComment},
-        #{page}, #{notice}, #{parentCommentId}, #{blogId}, #{qq})
+        insert into comment (nickname, email, content, avatar, create_time, ip, is_published, is_admin_comment,
+        page, is_notice, parent_comment_id, blog_id, qq, user_id)
+        values (#{nickname}, #{email}, #{content}, #{avatar}, #{createTime}, #{ip}, #{published}, #{adminComment},
+        #{page}, #{notice}, #{parentCommentId}, #{blogId}, #{qq}, #{userId,jdbcType=BIGINT})
     </insert>
 
     <!-- 根据用户ID统计其所有博客收到的公开评论总数 -->
@@ -138,5 +169,25 @@
         FROM comment c
         JOIN blog b ON c.blog_id = b.id
         WHERE b.user_id = #{userId} AND c.is_published = true
+    </select>
+
+    <!-- (ADMIN) 按页面和父评论id查询评论List (所有字段, 无 published 限制) -->
+    <select id="getAdminTopLevelComments" resultMap="comment">
+        SELECT c.id, c.nickname, c.email, c.content, c.avatar, c.create_time, c.ip,
+               c.is_published, c.is_admin_comment, c.page, c.is_notice,
+               c.parent_comment_id, c.blog_id, c.qq, c.user_id, b.title
+        FROM comment AS c
+        LEFT JOIN blog AS b ON c.blog_id = b.id
+        <where>
+            c.parent_comment_id = #{parentCommentId}
+            <if test="page != null">
+                AND c.page = #{page}
+                <if test="page == 0 and blogId != null">
+                    AND c.blog_id = #{blogId}
+                </if>
+            </if>
+            <!-- No is_published filter for admin -->
+        </where>
+        ORDER BY c.create_time DESC
     </select>
 </mapper>

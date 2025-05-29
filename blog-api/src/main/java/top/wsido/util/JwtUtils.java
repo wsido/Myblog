@@ -67,9 +67,12 @@ public class JwtUtils {
 		for (GrantedAuthority authority : authorities) {
 			sb.append(authority.getAuthority()).append(",");
 		}
+		if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ',') {
+			sb.deleteCharAt(sb.length() - 1);
+		}
 		String jwt = Jwts.builder()
 				.setSubject(subject)
-				.claim("authorities", sb)
+				.claim("authorities", sb.toString())
 				.setExpiration(new Date(System.currentTimeMillis() + expireTime))
 				.signWith(SignatureAlgorithm.HS512, secretKey)
 				.compact();
@@ -100,7 +103,10 @@ public class JwtUtils {
 	 * @return
 	 */
 	public static Claims getTokenBody(String token) {
-		Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token.replace("Bearer", "")).getBody();
+		if (token.startsWith("Bearer ")) {
+			token = token.substring(7);
+		}
+		Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
 		return claims;
 	}
 } 

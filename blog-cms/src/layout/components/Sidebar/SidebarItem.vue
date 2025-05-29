@@ -70,12 +70,9 @@
 
 				// When there is only one child router, the child router is displayed by default
 				if (showingChildren.length === 1) {
-					//仪表盘只显示为父路由
-					if (showingChildren[0].name === 'Dashboard') {
-						return true
-					}
-					//修改为单个子路由时也显示父菜单
-					return false
+					// 如果只有一个可显示的子路由，则父路由有潜力被扁平化显示为指向该子路由的直接链接。
+					// SidebarItem.vue 模板中的其他条件会进一步判断这个唯一的子路由是否是叶子节点。
+					return true;
 				}
 
 				// Show parent if there are no child router to display

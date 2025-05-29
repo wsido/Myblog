@@ -2,7 +2,7 @@ import axios from '@/util/request'
 
 export function getSiteSettingData() {
 	return axios({
-		url: 'siteSettings',
+		url: '/admin/siteSettings',
 		method: 'GET'
 	})
 }

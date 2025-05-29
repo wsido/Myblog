@@ -45,4 +45,8 @@ public class Blog {
 
 	private Object cate;//页面展示层传输的分类对象：正常情况下为 字符串 或 分类id
 	private List<Object> tagList;//页面展示层传输的标签对象：正常情况下为 List<Integer>标签id 或 List<String>标签名
+	
+	// 前端传递的字段
+	private Integer categoryId; // 前端传递的分类ID
+	private List<Integer> tagIds; // 前端传递的标签ID列表
 }

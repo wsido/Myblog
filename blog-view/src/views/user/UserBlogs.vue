@@ -120,12 +120,24 @@ export default {
     goToWrite() {
       // 跳转到后台写文章页面，使用完整URL
       // Assuming admin (CMS) is served at /admin/
-      window.open('http://localhost:8080/admin/#/blog-user/write', '_blank')
+      window.open('http://localhost:8079/admin/#/my-blog/write-article', '_blank')
     },
     editBlog(blog) {
       // 跳转到后台编辑页面，使用完整URL
       // Assuming admin (CMS) is served at /admin/
-      window.open(`http://localhost:8080/admin/#/blog-user/edit/${blog.id}`, '_blank')
+      let blogIdToUse = String(blog.id).trim(); // 转换为字符串并去除首尾空格
+      console.log('Original blog.id:', blog.id, 'Type:', typeof blog.id);
+      console.log('Cleaned blogIdToUse:', blogIdToUse, 'Type:', typeof blogIdToUse);
+
+      if (!/^\d+$/.test(blogIdToUse)) {
+          console.error('Error: Cleaned blog.id is not a pure digit string!', blogIdToUse);
+          this.$message.error('博客ID包含无效字符，无法编辑。');
+          return;
+      }
+
+      const targetUrl = `http://localhost:8079/admin/#/my-blog/edit-article/${blogIdToUse}`;
+      console.log('Opening URL:', targetUrl);
+      window.open(targetUrl, '_blank');
     },
     changeBlogVisibility(blog) {
       const newVisibility = {

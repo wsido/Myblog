@@ -35,6 +35,14 @@
 									<i class="book icon"></i>
 								</div>
 							</a>
+							<!-- 收藏按钮 -->
+							<div class="item m-common-black" v-if="isUserLoggedIn">
+								<a @click.prevent="toggleFavorite" style="cursor:pointer;">
+									<div data-inverted="" :data-tooltip="isFavorited ? '取消收藏' : '点击收藏'" data-position="top center">
+										<i :class="['heart icon', isFavorited ? 'red' : 'outline']"></i>
+									</div>
+								</a>
+							</div>
 						</div>
 					</div>
 					<!--分类-->
@@ -87,9 +95,9 @@
 </template>
 
 <script>
-	import {getBlogById} from "@/api/blog";
+	import {getBlogById, checkFavorite, addFavorite, removeFavorite} from "@/api/blog";
 	import CommentList from "@/components/comment/CommentList";
-	import {mapState} from "vuex";
+	import {mapState, mapGetters} from "vuex";
 	import {SET_FOCUS_MODE, SET_IS_BLOG_RENDER_COMPLETE} from '@/store/mutations-types';
 
 	export default {
@@ -99,13 +107,15 @@
 			return {
 				blog: {},
 				bigFontSize: false,
+				isFavorited: false,
 			}
 		},
 		computed: {
 			blogId() {
 				return parseInt(this.$route.params.id)
 			},
-			...mapState(['siteInfo', 'focusMode'])
+			...mapState(['siteInfo', 'focusMode']),
+			...mapGetters(['isUserLoggedIn', 'currentUser'])
 		},
 		beforeRouteEnter(to, from, next) {
 			//路由到博客文章页面之前，应将文章的渲染完成状态置为 false
@@ -158,6 +168,10 @@
 							//将文章渲染完成状态置为 true
 							this.$store.commit(SET_IS_BLOG_RENDER_COMPLETE, true)
 						})
+						// 获取博客信息后，检查收藏状态
+						if (this.isUserLoggedIn) {
+							this.checkFavoriteStatus();
+						}
 					} else {
 						this.msgError(res.msg)
 					}
@@ -167,6 +181,51 @@
 			},
 			changeFocusMode() {
 				this.$store.commit(SET_FOCUS_MODE, !this.focusMode)
+			},
+			async checkFavoriteStatus() {
+				if (!this.isUserLoggedIn) return;
+				try {
+					const res = await checkFavorite(this.blogId);
+					if (res.code === 200) {
+						this.isFavorited = res.data.isFavorite;
+					} else {
+						console.error("检查收藏状态失败:", res.msg);
+					}
+				} catch (error) {
+					console.error("检查收藏状态异常:", error);
+				}
+			},
+			async toggleFavorite() {
+				if (!this.isUserLoggedIn) {
+					this.msgInfo("请先登录再进行收藏操作");
+					// 可以选择跳转到登录页
+					// this.$router.push('/login');
+					return;
+				}
+				try {
+					if (this.isFavorited) {
+						// 执行取消收藏
+						const res = await removeFavorite(this.blogId);
+						if (res.code === 200) {
+							this.isFavorited = false;
+							this.msgSuccess("已取消收藏");
+						} else {
+							this.msgError(res.msg || "取消收藏失败");
+						}
+					} else {
+						// 执行添加收藏
+						const res = await addFavorite(this.blogId);
+						if (res.code === 200) {
+							this.isFavorited = true;
+							this.msgSuccess("收藏成功");
+						} else {
+							this.msgError(res.msg || "收藏失败");
+						}
+					}
+				} catch (error) {
+					this.msgError("操作失败，请重试");
+					console.error("收藏/取消收藏操作异常:", error);
+				}
 			}
 		}
 	}

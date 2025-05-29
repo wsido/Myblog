@@ -32,7 +32,8 @@
 
 <script>
 	import Breadcrumb from "@/components/Breadcrumb";
-	import {getMomentListByQuery, updatePublished, deleteMomentById} from "@/api/moment";
+	import {getMomentListByQuery, updatePublished, deleteMomentById, getCurrentUserMomentListByQuery, deleteCurrentUserMomentById} from "@/api/moment";
+	import { mapGetters } from 'vuex';
 
 	export default {
 		name: "MomentList",
@@ -49,15 +50,47 @@
 				total: 0,
 			}
 		},
+		computed: {
+			...mapGetters(['roles']),
+			isAdmin() {
+				return this.roles && this.roles.includes('admin');
+			},
+			viewScope() {
+				return this.$route.meta.scope;
+			}
+		},
 		created() {
 			this.getMomentList()
 		},
 		methods: {
 			getMomentList() {
-				getMomentListByQuery(this.queryInfo).then(res => {
-					this.momentList = res.data.list
-					this.total = res.data.total
-				})
+				// 根据用户角色和视图范围来决定使用哪个API
+				const params = { ...this.queryInfo };
+				
+				if (this.viewScope === 'currentUser') {
+					// 使用用户专属API获取当前用户的动态
+					getCurrentUserMomentListByQuery(params).then(res => {
+						this.momentList = res.data.list || res.data.blogs || res.data;
+						this.total = res.data.total || (res.data.list ? res.data.list.length : res.data.length);
+					}).catch(err => {
+						// 如果专属API调用失败，尝试使用admin API并带上scope参数
+						params.scope = 'currentUser';
+						getMomentListByQuery(params).then(res => {
+							this.momentList = res.data.list;
+							this.total = res.data.total;
+						});
+					});
+				} else {
+					// 对管理员视图，可以加上额外参数以获取全部动态
+					if (this.isAdmin && this.viewScope === 'all') {
+						params.scope = 'all';
+					}
+					
+					getMomentListByQuery(params).then(res => {
+						this.momentList = res.data.list;
+						this.total = res.data.total;
+					});
+				}
 			},
 			//监听 pageSize 改变事件
 			handleSizeChange(newSize) {
@@ -75,13 +108,31 @@
 				})
 			},
 			goEditMomentPage(id) {
-				this.$router.push(`/blog/moment/edit/${id}`)
+				// 根据不同的路由来源修改跳转路径
+				if (this.viewScope === 'currentUser') {
+					this.$router.push(`/my-blog/moment/edit/${id}`);
+				} else {
+					this.$router.push(`/blog/moment/edit/${id}`);
+				}
 			},
 			deleteMomentById(id) {
-				deleteMomentById(id).then(res => {
+				// 根据视图范围决定使用哪个删除API
+				const deleteFn = this.viewScope === 'currentUser' ? 
+					deleteCurrentUserMomentById : 
+					deleteMomentById;
+				
+				deleteFn(id).then(res => {
 					this.msgSuccess(res.msg)
 					this.getMomentList()
-				})
+				}).catch(err => {
+					// 如果专属API调用失败，尝试使用admin API
+					if (this.viewScope === 'currentUser') {
+						deleteMomentById(id).then(res => {
+							this.msgSuccess(res.msg)
+							this.getMomentList()
+						});
+					}
+				});
 			}
 		}
 	}
