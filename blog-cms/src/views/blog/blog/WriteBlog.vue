@@ -9,8 +9,11 @@
 				</el-col>
 				<el-col :span="12">
 					<el-form-item label="文章首图URL" prop="firstPicture">
-						<el-input v-model="form.firstPicture" placeholder="文章首图，用于随机文章展示"></el-input>
+						<el-input v-model="form.firstPicture" placeholder="文章首图，可留空由系统自动生成">
+							<el-button slot="append" @click="generateFirstPicturePreview">生成预览</el-button>
+						</el-input>
 					</el-form-item>
+					<el-image v-if="form.firstPicture" :src="form.firstPicture" fit="contain" style="width: 100%; height: 200px; border: 1px solid #EBEEF5; margin-top: 10px;"></el-image>
 				</el-col>
 			</el-row>
 
@@ -116,11 +119,14 @@
 		getUserManagementBlogDetail,
 		getUserManagementCategoriesAndTags,
 		createUserManagementBlog,
-		updateUserManagementBlog
+		updateUserManagementBlog,
+
+		// New API for cover generation
+		generateCover
 		// public facing user APIs like getCurrentUserBlogById are not directly used in this CMS write form for now
 	} from '@/api/blog';
 	import Breadcrumb from "@/components/Breadcrumb";
-	import { mapGetters } from 'vuex';
+	import { mapGetters, mapActions } from 'vuex';
 
 	export default {
 		name: "WriteBlog",
@@ -160,21 +166,12 @@
 			}
 		},
 		computed: {
-			...mapGetters(['roles', 'userId']),
+			...mapGetters(['roles', 'userId', 'isAdmin', 'isAdminAllScope', 'isCurrentUserCmsScope']),
 			isEditing() {
 				return !!this.$route.params.id;
 			},
 			viewScope() {
 				return this.$route.meta.scope || 'all'; 
-			},
-			isAdmin() {
-				return this.roles.includes('admin');
-			},
-			isAdminAllScope() {
-				return this.isAdmin && this.viewScope === 'all';
-			},
-			isCurrentUserCmsScope() {
-				return this.viewScope === 'currentUserCMS';
 			},
 			isAllowCreateCategoryTag(){
 				return this.isAdmin;
@@ -208,9 +205,27 @@
 			}
 		},
 		methods: {
+			...mapActions('user', ['getUserInfo']),
+			...mapActions('blog', ['getCategoryAndTag', 'updateCategoryAndTag']),
+			generateFirstPicturePreview() {
+				if (!this.form.title) {
+					this.$message.warning('请先填写文章标题');
+					return;
+				}
+				generateCover(this.form.title).then(res => {
+					if (res.code === 200) {
+						this.form.firstPicture = res.data;
+						this.$message.success('预览图已生成');
+					} else {
+						this.$message.error(res.msg);
+					}
+				}).catch(() => {
+					this.$message.error('生成预览图失败，请检查后端服务');
+				});
+			},
 			calculateWords(markdownContent) {
 				if (markdownContent) {
-					const text = markdownContent.replace(/[\s#*`\->【】]/g, ''); // Remove common markdown symbols and spaces for a rough count
+					const text = markdownContent.replace(/[\\s#*`\\>【】\-]/g, ''); // Remove common markdown symbols and spaces for a rough count
 					this.form.words = text.length;
 				} else {
 					this.form.words = 0;
@@ -264,7 +279,7 @@
 							this.form.description = blog.description;
 							this.form.content = blog.content;
 							this.form.cate = blog.category ? blog.category.id : null; // Assuming category is an object with id
-							this.form.tagList = blog.tags ? blog.tags.map(tag => tag.id) : []; // Assuming tags is an array of objects with id
+							this.form.tagList = blog.tags ? blog.tags.map(tag => tag.name) : []; // Assuming tags is an array of objects with id
 							this.form.words = blog.words;
 							this.form.readTime = blog.readTime;
 							this.form.views = blog.views;
@@ -301,68 +316,72 @@
 				})
 			},
 			submitForm() {
-				this.$refs.formRef.validate(async valid => {
+				this.form.published = this.radio === 1 || this.radio === 3;
+				if (this.radio !== 3) {
+					this.form.password = '';
+				}
+				this.$refs.formRef.validate(async (valid) => {
 					if (valid) {
-						// Log the form data just before submitting
-						console.log("[WriteBlog.vue submitForm] Form data before API call:", JSON.parse(JSON.stringify(this.form)));
-
-						// Set published and password based on radio selection
-						if (this.radio === 1) {//公开
-							this.form.published = true;
-							this.form.password = '';
-						} else if (this.radio === 2) {//私密
-							this.form.published = false;
-							this.form.password = ''; // Ensure password is blank for private posts
-						} else if (this.radio === 3) {//密码保护
-							this.form.published = true;
-							// Password is already bound to this.form.password
-							if (!this.form.password) {
-								return this.msgError('请设置密码');
-							}
+						// Map selected tag names back to IDs before submitting
+						if (this.form.tagList && this.form.tagList.length > 0) {
+							this.form.tagIds = this.tagList
+								.filter(tag => this.form.tagList.includes(tag.name))
+								.map(tag => tag.id);
+						} else {
+							this.form.tagIds = [];
 						}
 
-						// Determine API based on admin status and scope for saving/updating
 						try {
 							let response;
-							if (this.isEditing) { // 更新博客
-								if (this.isAdmin) { // Admin always uses adminUpdateBlog
-									response = await adminUpdateBlog(this.form);
-								} else if (this.isCurrentUserCmsScope) { // User in their CMS scope
-									response = await updateUserManagementBlog(this.form.id, this.form); // Pass ID and form for user update
-								} else {
-									throw new Error("未知的编辑范围或权限");
-								}
-							} else { // 保存新博客
-								if (this.isAdmin) { // Admin always uses adminSaveBlog
-									response = await adminSaveBlog(this.form);
-								} else if (this.isCurrentUserCmsScope) { // User in their CMS scope
-									response = await createUserManagementBlog(this.form);
-								} else {
-									throw new Error("未知的保存范围或权限");
-								}
-							}
-
-							if (response && response.code === 200) {
-								this.msgSuccess(response.msg || '操作成功');
-								this.dialogVisible = false;
-								// 根据当前scope和角色决定跳转到哪个列表页
-								if (this.isAdminAllScope) { // Admin was in 'all' scope
-									this.$router.push('/admin/content-management/article-list-all');
-								} else if (this.isCurrentUserCmsScope) { // User in CMS, or Admin was in 'my-blog'
-									this.$router.push('/my-blog/article-list');
-								} else {
-									// Fallback or default redirect if needed
-									this.$router.push('/'); 
-								}
+							if (this.isEditing) {
+								response = this.isAdminAllScope 
+									? await adminUpdateBlog(this.form) 
+									: await updateUserManagementBlog(this.form);
 							} else {
-								this.msgError(response.msg || '操作失败');
+								response = this.isAdmin 
+									? await adminSaveBlog(this.form) 
+									: await createUserManagementBlog(this.form);
 							}
+							
+							this.$message.success('保存成功');
+							// Update the form with data from backend to reflect auto-generated cover
+							if (response.data) {
+								this.form = { ...this.form, ...response.data };
+							}
+							this.dialogVisible = false;
+							this.$router.back();
 						} catch (error) {
-							console.error("Error submitting blog form:", error);
-							// this.msgError('操作失败，请重试');
+							// Error handling is managed by request interceptor, but can add specific logic here if needed.
 						}
 					} else {
-						return this.msgError('请正确填写表单项');
+						this.$message.error('请填写必要字段');
+						return false;
+					}
+				});
+			},
+			handleCheckChange(data, checked, indeterminate) {
+				if (checked) {
+					this.form.cate = data.id
+				}
+			},
+			getBlog(id) {
+				(this.isAdminAllScope ? getBlogById(id) : getUserManagementBlogById(id)).then(res => {
+					this.form = {
+						...this.form,
+						password: res.data.password,
+						user: res.data.user,
+						category: res.data.category,
+						tags: res.data.tags,
+						cate: res.data.category ? res.data.category.id : null,
+						tagList: res.data.tags.map(tag => tag.name),
+						categoryId: res.data.category ? res.data.category.id : null,
+						tagIds: res.data.tags.map(t => t.id)
+					}
+					// Update radio based on fetched data
+					if (res.data.password && res.data.password.length > 0) {
+						this.radio = 3;
+					} else {
+						this.radio = 1;
 					}
 				});
 			}

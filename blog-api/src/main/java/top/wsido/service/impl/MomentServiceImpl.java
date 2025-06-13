@@ -98,4 +98,10 @@ public class MomentServiceImpl implements MomentService {
 			throw new PersistenceException("动态修改失败");
 		}
 	}
+
+	@Override
+	public List<Moment> getMomentListByUserId(Long userId) {
+		// FIXME: momentMapper.getMomentListByUserId(userId) 方法需要后续实现
+		return momentMapper.getMomentListByUserId(userId);
+	}
 }

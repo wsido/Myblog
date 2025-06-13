@@ -82,29 +82,15 @@ export default {
 				this.$refs.loginForm.validate(valid => {
 					if (valid) {
 						this.loading = true
-						// this.$store.dispatch('user/login', this.loginForm).then(() => { // Old Vuex direct call
-						login(this.loginForm).then(response => {
-							// Backend login successful, now commit to Vuex store
-							// The backend returns { code, msg, data: { user, token } }
-							// We need to dispatch to user/login in Vuex with the data from backend
-							// This assumes the Vuex 'user/login' action is updated to accept this payload
-							this.$store.dispatch('user/login', response.data).then(() => {
-								this.$message.success(response.msg || '登录成功');
-								const redirectPath = this.$route.query.redirect || '/dashboard';
-								this.$router.push({ path: redirectPath });
-								this.loading = false;
-							}).catch(vuexError => {
-								// Error from Vuex store processing (e.g., setting roles, permissions)
-								this.$message.error(vuexError.message || '登录状态处理失败');
-								this.loading = false;
-							});
-						}).catch(error => {
-							// Error from backend API call
-							// error.response.data might contain { code, msg }
-							const errorMsg = error.response && error.response.data && error.response.data.msg ? error.response.data.msg : (error.message || '登录失败');
-							this.$message.error(errorMsg);
-							this.loading = false;
-						});
+						this.$store.dispatch('user/login', this.loginForm).then(() => {
+							this.$router.push({ path: this.redirect || '/' })
+							this.loading = false
+						}).catch(() => {
+							this.loading = false
+						})
+					} else {
+						console.log('error submit!!')
+						return false
 					}
 				})
 			}

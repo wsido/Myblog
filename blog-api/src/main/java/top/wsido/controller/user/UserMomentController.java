@@ -57,20 +57,12 @@ public class UserMomentController {
         if (user == null) {
             return Result.error("用户未找到");
         }
-        
-        // 获取当前用户的动态列表
-        // 这里需要根据用户ID过滤动态，但MomentService没有直接提供按用户ID查询的方法
-        // 使用分页并获取所有动态，然后在代码中过滤
+        Long userId = user.getId();
+
+        // 使用新的Service方法获取当前用户的动态列表
         PageHelper.startPage(pageNum, pageSize);
-        List<Moment> moments = momentService.getMomentList();
-        // 过滤当前用户的动态 (假设Moment有userId字段)
-        List<Moment> userMoments = new ArrayList<>();
-        for (Moment moment : moments) {
-            // 在实际情况中，这里需要根据Moment实体的结构来判断是否属于当前用户
-            // 由于Moment实体中没有userId字段，此处只是示例代码
-            // 在实际使用时需要根据业务逻辑修改
-            userMoments.add(moment);
-        }
+        // FIXME: momentService.getMomentListByUserId(userId) 方法需要后续实现
+        List<Moment> userMoments = momentService.getMomentListByUserId(userId); 
         PageInfo<Moment> pageInfo = new PageInfo<>(userMoments);
         PageResult<Moment> pageResult = new PageResult<>(pageInfo.getPages(), pageInfo.getList());
         
@@ -159,8 +151,7 @@ public class UserMomentController {
         }
         
         // 设置动态的用户关联
-        // 由于Moment实体中没有设置用户的字段，这里不进行设置
-        // 实际使用时，需要根据业务需求修改Moment实体或使用其他方法关联用户
+        moment.setUserId(user.getId()); // 设置 userId
         
         // 保存动态
         momentService.saveMoment(moment);

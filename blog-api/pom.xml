@@ -211,6 +211,13 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.15</version>
         </dependency>
+
+        <!-- sensitive-word -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+            <version>0.2.1</version> <!-- 文章中版本，请确认最新稳定版 -->
+        </dependency>
     </dependencies>
 
     <build>

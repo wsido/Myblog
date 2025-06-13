@@ -52,6 +52,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers("/user/register").permitAll()
 				//放行测试接口
 				.antMatchers("/user/test").permitAll()
+				//放行封面图片
+				.antMatchers("/covers/**").permitAll()
 
 				// 用户专属内容管理接口
 				// Specific rule for user categories and tags GET request

@@ -167,6 +167,13 @@ export const asyncRoutes = [
 				meta: {title: '动态管理(全站)', icon: 'el-icon-chat-line-round', roles: ['admin'], scope: 'all'}
 			},
 			{
+				path: 'moment/edit/:id',
+				name: 'EditMomentAdminAll',
+				component: () => import('@/views/blog/moment/WriteMoment'),
+				meta: {title: '编辑全站动态', roles: ['admin'], scope: 'all'},
+				hidden: true
+			},
+			{
 				path: 'comment-list-all',
 				name: 'CommentListAdminAll',
 				component: () => import('@/views/blog/comment/CommentList'),

@@ -2,7 +2,9 @@
 	<div>
 		<el-table :data="momentList">
 			<el-table-column label="序号" type="index" width="50"></el-table-column>
-			<el-table-column label="内容" prop="content" show-overflow-tooltip></el-table-column>
+			<el-table-column label="内容" prop="content" show-overflow-tooltip>
+				<template v-slot="scope">{{ stripHtml(scope.row.content) }}</template>
+			</el-table-column>
 			<el-table-column label="发布状态" width="80">
 				<template v-slot="scope">
 					<el-switch v-model="scope.row.published" @change="momentPublishedChanged(scope.row)"></el-switch>
@@ -63,21 +65,50 @@
 			this.getMomentList()
 		},
 		methods: {
+			stripHtml(html) {
+				let tmp = document.createElement("DIV");
+				tmp.innerHTML = html;
+				return tmp.textContent || tmp.innerText || "";
+			},
 			getMomentList() {
 				// 根据用户角色和视图范围来决定使用哪个API
 				const params = { ...this.queryInfo };
 				
-				if (this.viewScope === 'currentUser') {
-					// 使用用户专属API获取当前用户的动态
+				if (this.viewScope === 'currentUserCMS') {
+					console.log('[MomentList] In currentUserCMS scope, attempting to call getCurrentUserMomentListByQuery');
 					getCurrentUserMomentListByQuery(params).then(res => {
-						this.momentList = res.data.list || res.data.blogs || res.data;
-						this.total = res.data.total || (res.data.list ? res.data.list.length : res.data.length);
+						console.log('[MomentList] getCurrentUserMomentListByQuery response:', res);
+						// Ensure res.data and res.data.list are valid before assigning
+						if (res && res.data) {
+							this.momentList = res.data.list || res.data.blogs || []; // Default to empty array if all are undefined
+							this.total = res.data.total || 0; // Default to 0
+							// If res.data itself is the list (older API?)
+							if (Array.isArray(res.data) && (!res.data.list && !res.data.blogs)) {
+								this.momentList = res.data;
+								this.total = res.data.length;
+							}
+						} else {
+							console.error('[MomentList] getCurrentUserMomentListByQuery response data is invalid:', res);
+							this.momentList = [];
+							this.total = 0;
+						}
 					}).catch(err => {
-						// 如果专属API调用失败，尝试使用admin API并带上scope参数
-						params.scope = 'currentUser';
-						getMomentListByQuery(params).then(res => {
-							this.momentList = res.data.list;
-							this.total = res.data.total;
+						console.error("[MomentList] Error in getCurrentUserMomentListByQuery, falling back:", err);
+						params.scope = 'currentUserCMS'; 
+						getMomentListByQuery(params).then(res_fallback => {
+							console.log('[MomentList] Fallback getMomentListByQuery response:', res_fallback);
+							if (res_fallback && res_fallback.data) {
+								this.momentList = res_fallback.data.list || [];
+								this.total = res_fallback.data.total || 0;
+							} else {
+								console.error('[MomentList] Fallback getMomentListByQuery response data is invalid:', res_fallback);
+								this.momentList = [];
+								this.total = 0;
+							}
+						}).catch(fallback_err => {
+							console.error("[MomentList] Error in fallback getMomentListByQuery:", fallback_err);
+							this.momentList = [];
+							this.total = 0;
 						});
 					});
 				} else {
@@ -109,15 +140,19 @@
 			},
 			goEditMomentPage(id) {
 				// 根据不同的路由来源修改跳转路径
-				if (this.viewScope === 'currentUser') {
+				if (this.viewScope === 'currentUserCMS') {
 					this.$router.push(`/my-blog/moment/edit/${id}`);
+				} else if (this.viewScope === 'all' && this.isAdmin) { // Admin in all moments list
+					this.$router.push(`/admin/content-management/moment/edit/${id}`);
 				} else {
-					this.$router.push(`/blog/moment/edit/${id}`);
+					// Fallback or error, though this case should ideally not be reached if scopes are well-defined
+					console.error('goEditMomentPage: Unknown scope or configuration error', this.viewScope);
+					// this.$router.push(`/blog/moment/edit/${id}`); // Old problematic path, commented out
 				}
 			},
 			deleteMomentById(id) {
 				// 根据视图范围决定使用哪个删除API
-				const deleteFn = this.viewScope === 'currentUser' ? 
+				const deleteFn = this.viewScope === 'currentUserCMS' ? 
 					deleteCurrentUserMomentById : 
 					deleteMomentById;
 				
@@ -126,10 +161,12 @@
 					this.getMomentList()
 				}).catch(err => {
 					// 如果专属API调用失败，尝试使用admin API
-					if (this.viewScope === 'currentUser') {
-						deleteMomentById(id).then(res => {
-							this.msgSuccess(res.msg)
+					if (this.viewScope === 'currentUserCMS') {
+						deleteMomentById(id).then(res_fallback => {
+							this.msgSuccess(res_fallback.msg)
 							this.getMomentList()
+						}).catch(fallback_err => {
+							console.error("Error deleting current user moment via fallback API:", fallback_err);
 						});
 					}
 				});

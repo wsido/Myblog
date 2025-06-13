@@ -219,3 +219,13 @@ export function getAdminBlogs(queryInfo) {
 		}
 	})
 }
+
+export function generateCover(title) {
+	return axios({
+		url: 'admin/covers/generate',
+		method: 'GET',
+		params: {
+			title
+		}
+	})
+}

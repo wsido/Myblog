@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# MCP Context7 使用规则
+
+## 核心目标
+本工具的核心目标是准确、高效地获取关于特定库或包的最新文档。
+
+## 标准工作流（必须遵守）
+1.  **第一步：解析库 ID**
+    -   **必须** 首先调用 `resolve-library-id` 函数。
+    -   将用户查询中提到的库/包名称作为 `libraryName` 参数传入。
+    -   **禁止** 直接使用用户提供的名称去调用 `get-library-docs`，除非它已经是 `org/project` 的格式。
+
+2.  **第二步：选择最佳匹配**
+    -   仔细分析 `resolve-library-id` 的返回结果。
+    -   根据名称相似度、描述相关性、文档覆盖率（Code Snippet 数量）和信任分数，选择最合适的库。
+
+3.  **第三步：获取文档**
+    -   使用上一步中选定的 `context7CompatibleLibraryID` 来调用 `get-library-docs`。
+    -   如果用户查询的意图很明确（例如"如何使用 React hooks"），请在 `get-library-docs` 中使用 `topic` 参数（例如 `topic: 'hooks'`）来获取更具针对性的内容。

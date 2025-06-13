@@ -36,11 +36,17 @@ export function updatePublished(id, published) {
 export function getMomentById(id) {
 	return axios({
 		url: 'moment',
-		method: 'GET',
-		params: {
-			id
-		}
+		method: 'get',
+		params: {id}
 	})
+}
+
+export function getAdminMomentById(id) {
+	return axios({
+		url: 'admin/moment',
+		method: 'get',
+		params: { id }
+	});
 }
 
 export function getCurrentUserMomentById(id) {

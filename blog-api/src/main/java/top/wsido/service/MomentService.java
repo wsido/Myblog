@@ -20,4 +20,6 @@ public interface MomentService {
 	void saveMoment(Moment moment);
 
 	void updateMoment(Moment moment);
+
+	List<Moment> getMomentListByUserId(Long userId);
 }

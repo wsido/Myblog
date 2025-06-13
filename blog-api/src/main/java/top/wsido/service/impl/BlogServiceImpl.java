@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -23,6 +24,7 @@ import com.github.pagehelper.PageInfo;
 import top.wsido.constant.RedisKeyConstants;
 import top.wsido.entity.Blog;
 import top.wsido.entity.Category;
+import top.wsido.entity.SiteSetting;
 import top.wsido.entity.Tag;
 import top.wsido.entity.User;
 import top.wsido.exception.BadRequestException;
@@ -31,6 +33,9 @@ import top.wsido.exception.NotFoundException;
 import top.wsido.exception.PersistenceException;
 import top.wsido.mapper.BlogMapper;
 import top.wsido.mapper.CategoryMapper;
+import top.wsido.mapper.CommentMapper;
+import top.wsido.mapper.SiteSettingMapper;
+import top.wsido.mapper.TagMapper;
 import top.wsido.mapper.UserMapper;
 import top.wsido.model.dto.BlogView;
 import top.wsido.model.dto.BlogVisibility;
@@ -47,7 +52,12 @@ import top.wsido.service.RedisService;
 import top.wsido.service.TagService;
 import top.wsido.util.JacksonUtils;
 import top.wsido.util.SecurityUtils;
+import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
 import top.wsido.util.markdown.MarkdownUtils;
+import top.wsido.util.CoverGeneratorUtil;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @Description: 博客文章业务层实现
@@ -57,17 +67,26 @@ import top.wsido.util.markdown.MarkdownUtils;
 @Service
 public class BlogServiceImpl implements BlogService {
 	@Autowired
-	BlogMapper blogMapper;
+	private BlogMapper blogMapper;
 	@Autowired
-	UserMapper userMapper;
+	private UserMapper userMapper;
 	@Autowired
-	CategoryMapper categoryMapper;
+	private CategoryMapper categoryMapper;
 	@Autowired
-	TagService tagService;
+	private TagService tagService;
 	@Autowired
-	RedisService redisService;
+	private RedisService redisService;
 	@Autowired
-	SecurityUtils securityUtils;
+	private SecurityUtils securityUtils;
+	@Autowired
+	private SensitiveWordBs sensitiveWordBs;
+	@Autowired
+	private TagMapper tagMapper;
+	@Autowired
+	private SiteSettingMapper siteSettingMapper;
+	@Autowired
+	private CoverGeneratorUtil coverGeneratorUtil;
+
 	//随机博客显示5条
 	private static final int randomBlogLimitNum = 5;
 	//最新推荐博客显示3条
@@ -79,6 +98,7 @@ public class BlogServiceImpl implements BlogService {
 	//私密博客提示
 	private static final String PRIVATE_BLOG_DESCRIPTION = "此文章受密码保护！";
 	private static final Logger logger = LoggerFactory.getLogger(BlogServiceImpl.class);
+	private static final String AUTO_COVER_GENERATOR_URL_SETTING_NAME_EN = "autoCoverGeneratorUrl";
 
 	/**
 	 * 项目启动时，保存所有博客的浏览量到Redis
@@ -440,134 +460,81 @@ public class BlogServiceImpl implements BlogService {
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public void saveBlog(top.wsido.model.dto.Blog blogDto) {
-		if (blogDto.getCategoryId() == null) {
-			throw new BadRequestException("文章分类不能为空");
+	public void saveBlog(top.wsido.model.dto.Blog blog) {
+		if (StringUtils.isEmpty(blog.getFirstPicture())) {
+			generateAndSetFirstPicture(blog);
 		}
-		Category category = categoryMapper.getCategoryById(blogDto.getCategoryId().longValue());
-		if (category == null) {
-			throw new NotFoundException("分类不存在");
+		// 敏感词过滤
+		if (blog.getTitle() != null) {
+			blog.setTitle(sensitiveWordBs.replace(blog.getTitle()));
 		}
-		blogDto.setCategory(category); // Set the full Category object on the DTO
-
-		User user = securityUtils.getCurrentUser();
-		if (user == null) {
-			throw new ForbiddenException("用户未登录，无法保存博客");
+		if (blog.getContent() != null) {
+			blog.setContent(sensitiveWordBs.replace(blog.getContent()));
 		}
-		blogDto.setUser(user); // Set the User object on the DTO
+		if (blog.getDescription() != null) {
+			blog.setDescription(sensitiveWordBs.replace(blog.getDescription()));
+		}
 
-		// Initialize boolean fields in DTO, defaulting to false if null
-		blogDto.setRecommend(Boolean.TRUE.equals(blogDto.getRecommend()));
-		blogDto.setPublished(Boolean.TRUE.equals(blogDto.getPublished()));
-		blogDto.setAppreciation(Boolean.TRUE.equals(blogDto.getAppreciation()));
-		blogDto.setCommentEnabled(Boolean.TRUE.equals(blogDto.getCommentEnabled()));
-		blogDto.setTop(Boolean.TRUE.equals(blogDto.getTop()));
-
-		Date date = new Date();
-		blogDto.setCreateTime(date);
-		blogDto.setUpdateTime(date);
-		blogDto.setViews(0);
-
-		if (blogDto.getReadTime() == null || blogDto.getReadTime() < 0) {
-			if (blogDto.getWords() != null && blogDto.getWords() > 0) {
-				blogDto.setReadTime((int) Math.round(blogDto.getWords() / 200.0));
-			} else {
-				blogDto.setReadTime(0);
-			}
-		} // else, keep the readTime if provided in DTO
-
-		if (blogMapper.saveBlog(blogDto) != 1) { // Pass the prepared DTO to mapper
+		if (blogMapper.saveBlog(blog) != 1) {
 			throw new PersistenceException("添加博客失败");
 		}
-
-		// After saveBlog, blogDto should have the ID set by MyBatis (e.g., via <selectKey>)
-		if (blogDto.getId() != null && blogDto.getTagIds() != null && !blogDto.getTagIds().isEmpty()) {
-			for (Integer tagId : blogDto.getTagIds()) {
-				if (tagId != null) {
-					saveBlogTag(blogDto.getId(), tagId.longValue());
-				}
+		
+		if (blog.getTagIds() != null && !blog.getTagIds().isEmpty()) {
+			for (Integer tagId : blog.getTagIds()) {
+				blogMapper.saveBlogTag(blog.getId(), tagId.longValue());
 			}
 		}
 		deleteBlogRedisCache();
 	}
 
+	/**
+	 * 如果文章首图URL为空，则根据标题自动生成一个。
+	 *
+	 * @param blog 博客文章
+	 */
+	private void generateAndSetFirstPicture(top.wsido.model.dto.Blog blog) {
+		try {
+			// 调用本地工具类生成封面
+			String coverUrl = coverGeneratorUtil.generate(blog.getTitle());
+			blog.setFirstPicture(coverUrl);
+		} catch (Exception e) {
+			logger.error("Failed to generate cover image locally.", e);
+			// 如果本地生成失败，可以设置一个固定的默认图片URL作为备用
+			blog.setFirstPicture("/img/default_cover.jpg");
+		}
+	}
+
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public void updateBlog(top.wsido.model.dto.Blog blogDto) {
-		// Fetch existing blog entity to get original values like createTime, author, and current boolean flags
-		top.wsido.entity.Blog existingBlogEntity = blogMapper.getBlogById(blogDto.getId());
-		if (existingBlogEntity == null) {
-			throw new NotFoundException("该博客不存在，无法更新");
+	public void updateBlog(top.wsido.model.dto.Blog blog) {
+		if (StringUtils.isEmpty(blog.getFirstPicture())) {
+			generateAndSetFirstPicture(blog);
+		}
+		// 敏感词过滤
+		if (blog.getTitle() != null) {
+			blog.setTitle(sensitiveWordBs.replace(blog.getTitle()));
+		}
+		if (blog.getContent() != null) {
+			blog.setContent(sensitiveWordBs.replace(blog.getContent()));
+		}
+		if (blog.getDescription() != null) {
+			blog.setDescription(sensitiveWordBs.replace(blog.getDescription()));
 		}
 
-		if (!securityUtils.isAdmin()) {
-			Long currentUserId = securityUtils.getCurrentUserId();
-			if (currentUserId == null || existingBlogEntity.getUser() == null || !currentUserId.equals(existingBlogEntity.getUser().getId())) {
-				throw new ForbiddenException("无权更新该博客");
-			}
-		}
-		
-		// Set fields that should be preserved from the existing entity onto the DTO before passing to mapper
-		blogDto.setCreateTime(existingBlogEntity.getCreateTime());
-		blogDto.setUser(existingBlogEntity.getUser());
-		blogDto.setViews(existingBlogEntity.getViews()); // Views are not typically updated via this DTO
+		blog.setUpdateTime(new Date());
 
-		// Update boolean flags in DTO
-		blogDto.setRecommend(Boolean.TRUE.equals(blogDto.getRecommend())); // is_recommend must be non-null
-
-		// For other booleans, if DTO field is null, it means no change was intended for that field by client,
-		// so use the existing value from the database entity.
-		if (blogDto.getAppreciation() == null) {
-		    blogDto.setAppreciation(existingBlogEntity.getAppreciation());
-		}
-		if (blogDto.getCommentEnabled() == null) {
-		    blogDto.setCommentEnabled(existingBlogEntity.getCommentEnabled());
-		}
-		if (blogDto.getPublished() == null) {
-		    blogDto.setPublished(existingBlogEntity.getPublished());
-		}
-		if (blogDto.getTop() == null) {
-		    blogDto.setTop(existingBlogEntity.getTop());
-		}
-
-		blogDto.setUpdateTime(new Date());
-
-		if (blogDto.getReadTime() == null || blogDto.getReadTime() < 0) {
-			if (blogDto.getWords() != null && blogDto.getWords() > 0) {
-				blogDto.setReadTime((int) Math.round(blogDto.getWords() / 200.0));
-			} else {
-				blogDto.setReadTime(existingBlogEntity.getReadTime() != null ? existingBlogEntity.getReadTime() : 0);
-			}
-		} // else, use readTime from DTO if provided
-
-		if (blogDto.getCategoryId() != null) {
-		    Category category = categoryMapper.getCategoryById(blogDto.getCategoryId().longValue());
-		    if (category == null) {
-		        throw new NotFoundException("更新博客时指定的分类不存在");
-		    }
-		    blogDto.setCategory(category); // Set full category object on DTO
-		} else {
-			// If categoryId is null in DTO, it implies disassociation.
-			// Set the category object in DTO to null as well.
-		    blogDto.setCategory(null); 
-		}
-
-		if (blogMapper.updateBlog(blogDto) != 1) { // Pass the prepared DTO to mapper
+		if (blogMapper.updateBlog(blog) != 1) {
 			throw new PersistenceException("更新博客失败");
 		}
 
-		deleteBlogTagByBlogId(blogDto.getId());
-		if (blogDto.getTagIds() != null && !blogDto.getTagIds().isEmpty()) {
-			for (Integer tagId : blogDto.getTagIds()) {
-				if (tagId != null) {
-					saveBlogTag(blogDto.getId(), tagId.longValue());
-				}
+		deleteBlogTagByBlogId(blog.getId());
+		if (blog.getTagIds() != null && !blog.getTagIds().isEmpty()) {
+			for (Integer tagId : blog.getTagIds()) {
+				blogMapper.saveBlogTag(blog.getId(), tagId.longValue());
 			}
 		}
-
 		deleteBlogRedisCache();
-		// DTO views might be stale if not explicitly fetched/set before this call, using existing entity's views for redis
-		redisService.saveKVToHash(RedisKeyConstants.BLOG_VIEWS_MAP, blogDto.getId(), existingBlogEntity.getViews()); 
+		redisService.saveKVToHash(RedisKeyConstants.BLOG_VIEWS_MAP, blog.getId(), blog.getViews());
 	}
 
 	@Override
@@ -745,7 +712,7 @@ public class BlogServiceImpl implements BlogService {
 	public void updateBlogVisibilityById(Long blogId, BlogVisibility blogVisibility) {
 		// Permission check: Admin or owner
 		if (!securityUtils.isAdmin()) {
-			top.wsido.entity.Blog existingBlog = blogMapper.getBlogById(blogId);
+			Blog existingBlog = blogMapper.getBlogById(blogId);
 			if (existingBlog == null) {
 				throw new NotFoundException("该博客不存在 (updateBlogVisibilityById)");
 			}

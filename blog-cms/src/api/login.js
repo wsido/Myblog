@@ -10,7 +10,7 @@ export function login(data) {
 
 export function getInfo() {
 	return request({
-		url: '/user/info', // Corrected to point to the actual backend endpoint
+		url: '/admin/user', // Corrected to point to the actual backend endpoint
 		method: 'get'
 	})
 }

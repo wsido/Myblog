@@ -247,6 +247,11 @@ import echarts from 'echarts';
 				this.tagEcharts.setOption(this.tagOption)
 			},
 			initVisitRecordEcharts(visitRecord) {
+				if (visitRecord && visitRecord.date && visitRecord.pv && visitRecord.uv) {
+					this.visitRecordOption.xAxis.data = visitRecord.date
+					this.visitRecordOption.series[0].data = visitRecord.pv
+					this.visitRecordOption.series[1].data = visitRecord.uv
+				}
 				this.visitRecordEcharts = echarts.init(this.$refs.visitRecordEcharts)
 				this.visitRecordEcharts.setOption(this.visitRecordOption)
 			},

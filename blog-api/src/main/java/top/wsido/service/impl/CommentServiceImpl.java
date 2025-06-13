@@ -8,6 +8,7 @@ import top.wsido.exception.PersistenceException;
 import top.wsido.mapper.CommentMapper;
 import top.wsido.model.vo.PageComment;
 import top.wsido.service.CommentService;
+import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +23,8 @@ import java.util.List;
 public class CommentServiceImpl implements CommentService {
 	@Autowired
 	CommentMapper commentMapper;
+	@Autowired
+	SensitiveWordBs sensitiveWordBs;
 
 	@Override
 	public List<Comment> getListByPageAndParentCommentId(Integer page, Long blogId, Long parentCommentId) {
@@ -149,6 +152,11 @@ public class CommentServiceImpl implements CommentService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void updateComment(Comment comment) {
+		// 敏感词过滤
+		if (comment.getContent() != null) {
+			comment.setContent(sensitiveWordBs.replace(comment.getContent()));
+		}
+
 		if (commentMapper.updateComment(comment) != 1) {
 			throw new PersistenceException("评论修改失败");
 		}
@@ -162,6 +170,11 @@ public class CommentServiceImpl implements CommentService {
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void saveComment(top.wsido.model.dto.Comment comment) {
+		// 敏感词过滤
+		if (comment.getContent() != null) {
+			comment.setContent(sensitiveWordBs.replace(comment.getContent()));
+		}
+
 		if (commentMapper.saveComment(comment) != 1) {
 			throw new PersistenceException("评论失败");
 		}

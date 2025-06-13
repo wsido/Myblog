@@ -7,8 +7,9 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import top.wsido.config.properties.UploadProperties;
 import top.wsido.interceptor.AccessLimitInterceptor;
+
+import java.io.File;
 
 /**
  * @Description: 配置CORS跨域支持、拦截器
@@ -17,8 +18,6 @@ import top.wsido.interceptor.AccessLimitInterceptor;
 public class WebConfig implements WebMvcConfigurer {
 	@Autowired
 	AccessLimitInterceptor accessLimitInterceptor;
-	@Autowired
-	UploadProperties uploadProperties;
 
 	/**
 	 * 跨域请求
@@ -51,6 +50,14 @@ public class WebConfig implements WebMvcConfigurer {
 	 */
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-		registry.addResourceHandler(uploadProperties.getAccessPath()).addResourceLocations(uploadProperties.getResourcesLocations());
+		// 配置上传文件夹的访问路径
+		String uploadPath = System.getProperty("user.dir") + File.separator + "upload";
+		registry.addResourceHandler("/upload/**")
+				.addResourceLocations("file:" + uploadPath + File.separator);
+
+		// 配置封面图文件夹的访问路径
+		String coversPath = System.getProperty("user.dir") + File.separator + "covers";
+		registry.addResourceHandler("/covers/**")
+				.addResourceLocations("file:" + coversPath + File.separator);
 	}
 }

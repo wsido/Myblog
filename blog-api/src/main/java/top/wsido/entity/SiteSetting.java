@@ -22,4 +22,5 @@ public class SiteSetting {
 	private String nameZh;
 	private String value;
 	private Integer type;
+	private String autoCoverGeneratorUrl;
 }
